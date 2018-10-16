@@ -1,0 +1,9 @@
+authors = ["Jesus Mejia <jesusmejded@gmail.com>"]
+name = "Bilevel"
+uuid = "345d3ba6-d16c-11e8-3a43-33eb7bceec82"
+version = "0.1.0"
+
+[deps]
+
+[compat]
+julia = "1.0"
