@@ -101,17 +101,17 @@ function Options(;
     
     Options(
         # upper level parameters
-        promote(x_tol, F_tol, G_tol, H_tol),
-        promote(F_calls_limit, G_calls_limit, H_calls_limit),
+        promote(x_tol, F_tol, G_tol, H_tol)...,
+        promote(F_calls_limit, G_calls_limit, H_calls_limit)...,
         
         # lower level parameters
-        promote(y_tol, f_tol, g_tol, h_tol),
-        promote(f_calls_limit, g_calls_limit, h_calls_limit),
+        promote(y_tol, f_tol, g_tol, h_tol)...,
+        promote(f_calls_limit, g_calls_limit, h_calls_limit)...,
         
         Int(iterations),
 
         # Results options
-        promote(store_convergence,show_results, debug)
+        promote(store_convergence,show_results, debug)...
     )
     
 end
