@@ -24,6 +24,9 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     x = X[1,:]
     y = Y[1,:]
 
+    r = Optim.optimize( z -> f(x, z), y, Optim.BFGS())
+    y = r.minimizer
+
     child = generateChild(x, y, F(x, y), f(x, y))
     individual = typeof(child)
 
@@ -36,6 +39,9 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     for i in 2:N
         x = X[i,:]
         y = Y[i,:]
+
+        r = Optim.optimize( z -> f(x, z), y, Optim.BFGS())
+        y = r.minimizer
 
         child = generateChild(x, y, F(x, y), f(x, y))
         push!(population, child)
