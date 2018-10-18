@@ -1,2 +1,3 @@
 import Random.randperm
-import Optim: optimize, BFGS
+import Optim
+import LinearAlgebra: norm
