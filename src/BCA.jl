@@ -67,7 +67,7 @@ function center(U::Array, V::Array, α, β, searchType::Symbol)
     mass = getMass(U, V, α, β, searchType)
 
     a, b = center(U, V, mass)
-    return a, b, getWorstInd(U, searchType), argmin(mass[:,2])
+    return a, b, getWorstInd(U), argmin(mass[:,2])
 end
 
 ################################################################################
@@ -76,8 +76,8 @@ end
 
 function optimize(F::Function, # upper level objective function
                   f::Function; # lower level objective function
-                  bounds_ul::Matrix,
-                  bounds_ll::Matrix,
+                  bounds_ul::Array,
+                  bounds_ll::Array,
                   stop_criteria::Function = x -> false,
                   search_type::Symbol = :minimize,
 
@@ -87,7 +87,8 @@ function optimize(F::Function, # upper level objective function
                   # BCA parameters
                   k::Int = 3,
                   N::Int = k * size(bounds_ul, 2) * size(bounds_ll, 2),
-                  η_max::Int = 2.0,
+                  η_max::Real = 2.0,
+                  max_evals::Int = 100,
                   
                   # # upper level restrictions
                   # G::Function  = (x, y) -> 0.0,
@@ -103,7 +104,7 @@ function optimize(F::Function, # upper level objective function
 
     # general parameters
     D = D_ul + D_ll
-    N = D < 5 ? N : κ*D
+    N = D < 5 ? 5*D : k*D
 
     # initialize population
     Population = init_population(F, f, N, bounds_ul, bounds_ll)
@@ -112,12 +113,12 @@ function optimize(F::Function, # upper level objective function
     iteration = 0
 
     # best solution
-    best = getBest(Population, search_type)
+    best = getBest(Population)
 
-    convergence = [best]
+    convergence = [deepcopy(Population)]
 
     # start search
-    for iteration = 1:100
+    for iteration = 1:50
         I_ul = randperm(N)
         I_ll = randperm(N)
 
@@ -128,15 +129,15 @@ function optimize(F::Function, # upper level objective function
             y = Population[i].y
 
             # generate U masses
-            U = getU(Population, κ, I_ul, i, N)
-            V = getU(Population, κ, I_ll, i, N)
+            U = getU(Population, k, I_ul, i, N)
+            V = getU(Population, k, I_ll, i, N)
             
             # generate center of mass
-            c_ul, c_ll, u_worst, v_worst = center(U, V, α, β, search_type)
+            c_ul, c_ll, u_worst, v_worst = center(U, V, 0.1, 0.0, search_type)
 
             # stepsize
             η_ul = η_max * rand()
-            η_ll = η_max * rand()
+            # η_ll = η_max * rand()
 
             # u: worst element in U
             u = U[u_worst].x
@@ -144,36 +145,27 @@ function optimize(F::Function, # upper level objective function
             
             # current-to-center
             p = x + η_ul * (c_ul - u)
-            p = correct(p, bounds_ul)
+            # p = correct(p, bounds_ul)
             
-            r = optimize( z -> f(p, z), y, BFGS())
+            r = Optim.optimize( z -> f(p, z), y, Optim.BFGS())
             q = r.minimizer
 
             sol = generateChild(p, q, F(p, q), f(p, q))
 
-            # replace worst element
             if sol ≺ Population[i]
-                Population[getWorstInd(Population, search_type)] = sol
+                Population[i] = sol
 
-                if is_better_mass(sol, best, search_type)
+                if sol ≺ best
                     best = sol
-                    push!(convergence, best)
+                    # push!(convergence, best)
                 end
             end
 
         end
+        push!(convergence, deepcopy(Population))
 
     end
 
 
-
-    if true
-        println("+----------------------------------+")
-        println("|          HBO results             |")
-        println("+----------------------------------+")
-        printResults(best, Population, t, nevals_ul, nevals_ll)
-        println("+----------------------------------+")
-    end
-
-    return best.x, best.y, best, nevals_ul, Population, convergence
+    return convergence, best
 end
