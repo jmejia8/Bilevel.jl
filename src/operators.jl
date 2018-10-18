@@ -1,7 +1,7 @@
 ≺(a, b) = Selection(b, a)
 
 function Selection(Old::xf_indiv, New::xf_indiv)
-    return is_better(New, Old, searchType)
+    return is_better(New, Old)
 end
 
 # Deb rules (selection)
@@ -16,7 +16,7 @@ function Selection(Old::xfgh_indiv, New::xfgh_indiv)
         return false
     end
 
-    return is_better(New, Old, searchType)
+    return is_better(New, Old)
 end
 
 # Deb rules (selection)
@@ -30,7 +30,7 @@ function Selection(Old::xfg_indiv, New::xfg_indiv)
         return false
     end
 
-    return is_better(New, Old, searchType)
+    return is_better(New, Old)
 end
 
 function is_better(S1, S2)
