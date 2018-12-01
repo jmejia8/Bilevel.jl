@@ -83,3 +83,16 @@ end
 function inferType(fVal::Tuple{Float64,Array{Float64,1},Array{Float64,1}})
     return xfgh_indiv
 end
+
+############################################
+function correct(x::Vector{Float64}, bounds::Array)
+    # Correct solution
+
+    for i = 1:length(x)
+        if !( bounds[1,i] <= x[i] <= bounds[2,i] )
+            x[i] = bounds[1,i] + (bounds[2,i] - bounds[1,i])*rand()
+        end
+    end
+    
+    return x
+end

@@ -136,7 +136,7 @@ function optimize(F::Function, # upper level objective function
             c_ul, c_ll, u_worst, v_worst = center(U, V, 0.1, 0.0, search_type)
 
             # stepsize
-            η_ul = η_max * rand()
+            η_ul = η_max #* rand()
             # η_ll = η_max * rand()
 
             # u: worst element in U
@@ -144,15 +144,17 @@ function optimize(F::Function, # upper level objective function
             v = V[v_worst].y
             
             # current-to-center
-            p = x + η_ul * (c_ul - u)
-            # p = correct(p, bounds_ul)
+            d = (c_ul - u)
+            d = d ./ norm(d) # normalizing
+            p = x + η_ul * d
+            p = correct(p, bounds_ul)
             
             r = Optim.optimize( z -> f(p, z), y, Optim.BFGS())
             q = r.minimizer
 
             sol = generateChild(p, q, F(p, q), f(p, q))
 
-            if sol ≺ Population[i]
+            if true || sol ≺ Population[i]
                 Population[i] = sol
 
                 if sol ≺ best

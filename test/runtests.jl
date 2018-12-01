@@ -1,5 +1,6 @@
 using Bilevel
 using Plots
+# using 
 gr(legend=false)
 
 function main()
@@ -9,16 +10,19 @@ function main()
     bounds = Matrix([-1.0  1.0]')
 
     println("Optimizing...")
-    P, b = optimize(F, f, bounds_ul = bounds, bounds_ll=bounds, η_max=2.0)
+    P, b = optimize(F, f, bounds_ul = bounds, bounds_ll=bounds, η_max=1)
 
-    # println("Generating plot...")
-    # @gif for i = 1:length(P)
-    #     plot(title="$i", xlims=[-1, 1], ylims=[-1, 1])
+    println("f: ", b.f)
+    println("F: ", b.F)
 
-    #     for indiv = P[i]
-    #         scatter!(indiv.x, indiv.y)
-    #     end
-    # end
+    println("Generating plot...")
+    @gif for i = 1:length(P)
+        plot(title="$i", xlims=[-1, 1], ylims=[-1, 1])
+
+        for indiv = P[i]
+            scatter!(indiv.x, indiv.y)
+        end
+    end
 
 end
 
