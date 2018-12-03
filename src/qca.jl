@@ -204,14 +204,14 @@ function optimize(F_ul::Function, # upper level objective function
                 y1 = correct(y1, bounds_ll)
                 
                 # approx
-                r = Optim.optimize( z -> f(p, z), y1, Optim.BFGS())
+                r = Optim.optimize( z -> f(p, z), bounds_ll[1,:], bounds_ll[2,:], y1, Optim.Fminbox(Optim.BFGS()))
                 nevals_ll += r.f_calls
                 q = r.minimizer
             else
                 q = y0
             end
             
-            q = correct(q, bounds_ll)
+            # q = correct(q, bounds_ll)
 
             sol = generateChild(p, q, F(p, q), f(p, q))
             nevals_ll += 1
