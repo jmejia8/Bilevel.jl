@@ -18,17 +18,18 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     a_ll, b_ll = bounds_ll[1,:], bounds_ll[2,:]
    
     X = init_population(N, D_ul, a_ul, b_ul)
-    Y = init_population(N, D_ll, a_ll, b_ll)
+    Y = init_population(1, D_ll, a_ll, b_ll)
     
     # infers datatype
     x = X[1,:]
     y = Y[1,:]
 
-    r = Optim.optimize( z -> f(x, z), y, Optim.BFGS())
-    y = r.minimizer
+    nevals_ll = 0
 
     child = generateChild(x, y, F(x, y), f(x, y))
     individual = typeof(child)
+
+    nevals_ll += 1
 
     # population array
     population = Array{individual, 1}([])
@@ -36,18 +37,28 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     # first individual
     push!(population, child)
 
-    for i in 2:N
+    for i in 1:N
         x = X[i,:]
-        y = Y[i,:]
 
+        y, _ = Metaheuristics.eca( z-> f(x, z), D_ll;
+                                        limits=bounds_ll,
+                                        K = 3, N = 3D_ll,
+                                        showResults=false,
+                                        p_bin = 0,
+                                        p_exploit = 2,
+                                        canResizePop=false, 
+                                        max_evals=1000D_ll)
+        
         r = Optim.optimize( z -> f(x, z), y, Optim.BFGS())
         y = r.minimizer
+    
+        nevals_ll += 1000D_ll + r.f_calls + 1
 
         child = generateChild(x, y, F(x, y), f(x, y))
         push!(population, child)
     end
 
-    return population
+    return population, nevals_ll
 end
 
 #####################################################
