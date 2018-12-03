@@ -40,7 +40,7 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     for i in 1:N
         x = X[i,:]
 
-        y, _ = Metaheuristics.eca( z-> f(x, z), D_ll;
+        y, fy = Metaheuristics.eca( z-> f(x, z), D_ll;
                                         limits=bounds_ll,
                                         K = 3, N = 3D_ll,
                                         showResults=false,
@@ -49,7 +49,9 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
                                         canResizePop=false, 
                                         max_evals=1000D_ll)
         
-        r = Optim.optimize( z -> f(x, z), y, Optim.BFGS())
+        y = correct(y, bounds_ll)
+
+        r = Optim.optimize( z -> f(x, z), bounds_ll[1,:], bounds_ll[2,:], y, Optim.Fminbox(Optim.BFGS()))
         y = r.minimizer
     
         nevals_ll += 1000D_ll + r.f_calls + 1
@@ -101,7 +103,9 @@ function correct(x::Vector{Float64}, bounds::Array)
 
     for i = 1:length(x)
         if !( bounds[1,i] <= x[i] <= bounds[2,i] )
+            # print(x[i], "  --->   ")
             x[i] = bounds[1,i] + (bounds[2,i] - bounds[1,i])*rand()
+            # println(x[i])
         end
     end
     
