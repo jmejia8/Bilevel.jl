@@ -38,8 +38,8 @@ function getMass(U::Array, V::Array, α, β, searchType::Symbol)
     fitness = zeros(Float64, n, 2)
     
     for i = 1:n
-        fitness[i, 1] = U[i].F #+ α*U[i].f
-        fitness[i, 2] = V[i].f
+        fitness[i, 1] = U[i].F + α*U[i].f
+        fitness[i, 2] = V[i].f + α*U[i].F
     end
 
     return fitnessToMass(fitness, searchType)
@@ -70,7 +70,7 @@ function center(U::Array, V::Array, α, β, searchType::Symbol)
     return a, b, getWorstInd(U), argmin(mass[:,2])
 end
 
-function nearest(P, x)
+function nearest(P, x; tol = 1e-5)
     x_nearest = P[1].x
     y = P[1].y
     d = Inf
@@ -78,18 +78,17 @@ function nearest(P, x)
     for sol = P
         n = norm(x - sol.x)
 
-        if n ≈ 0.0
-            return sol.y
-        end
+        n >= d && (continue)
 
-        if n < d
-            x_nearest = sol.x
-            y = sol.y
-            d = n
-        end
+        x_nearest = sol.x
+        y = sol.y
+        d = n
+        
+        d <= tol && (break)
+
     end
     
-    y
+    y, d
 end
 
 ################################################################################
@@ -108,9 +107,10 @@ function optimize(F_ul::Function, # upper level objective function
 
                   # BCA parameters
                   k::Int = 3,
-                  N::Int = k * size(bounds_ul, 2) * size(bounds_ll, 2),
+                  N::Int = 2k * size(bounds_ul, 2),
                   η_max::Real = 2.0,
-                  max_evals::Int = 100,
+                  max_evals_ul::Int = 1000size(bounds_ul, 2),
+                  desired_accu = 1e-4,
                   
                   # # upper level restrictions
                   # G::Function  = (x, y) -> 0.0,
@@ -131,9 +131,10 @@ function optimize(F_ul::Function, # upper level objective function
     end
 
     nevals_ll = 0
+    nevals_lll = 0
 
     f(x, y) = begin
-        nevals_ll += 1
+        nevals_lll += 1
         f_ll(x, y)
     end
 
@@ -141,8 +142,13 @@ function optimize(F_ul::Function, # upper level objective function
     D = D_ul + D_ll
     # N = D < 5 ? 5*D : k*D
 
+    # tolerance for y proximity
+    tol = 1e-16
+
     # initialize population
-    Population = init_population(F, f, N, bounds_ul, bounds_ll)
+    Population, f_calls = init_population(F, f, N, bounds_ul, bounds_ll)
+
+    nevals_ll += f_calls
 
     # current generation
     iteration = 0
@@ -154,6 +160,7 @@ function optimize(F_ul::Function, # upper level objective function
 
     stop = false
 
+    α = 0.05
 
     # start search
     while !stop
@@ -166,35 +173,48 @@ function optimize(F_ul::Function, # upper level objective function
 
             # current
             x = Population[i].x
-            # y = Population[i].y
+            y = Population[i].y
 
             # generate U masses
             U = getU(Population, k, I_ul, i, N)
             V = getU(Population, k, I_ll, i, N)
             
             # generate center of mass
-            c_ul, c_ll, u_worst, v_worst = center(U, V, 0.1, 0.0, search_type)
+            c_ul, c_ll, u_worst, v_worst = center(U, V, α, α, search_type)
 
             # stepsize
             η_ul = η_max * rand()
-            # η_ll = η_max * rand()
+            η_ll = 0.5 * rand()
 
             # u: worst element in U
             u = U[u_worst].x
             v = V[v_worst].y
             
             # current-to-center
-            d = (c_ul - u)
-
-            p = x + η_ul * d
+            p = x + η_ul * (c_ul - u)
             p = correct(p, bounds_ul)
 
-            y = nearest(Population, p)
+            y0, d = nearest(Population, p; tol = tol)
             
-            r = Optim.optimize( z -> f(p, z), y, Optim.BFGS())
-            q = r.minimizer
+            if d >= tol
+
+                vv = (c_ll - v)
+                # current-to-center
+                y1 = y0 + (η_ll/ norm(vv)) * vv
+                y1 = correct(y1, bounds_ll)
+                
+                # approx
+                r = Optim.optimize( z -> f(p, z), y1, Optim.BFGS())
+                nevals_ll += r.f_calls
+                q = r.minimizer
+            else
+                q = y0
+            end
+            
+            q = correct(q, bounds_ll)
 
             sol = generateChild(p, q, F(p, q), f(p, q))
+            nevals_ll += 1
 
             if sol ≺ Population[i]
                 Population[getWorstInd(Population)] = sol
@@ -203,23 +223,23 @@ function optimize(F_ul::Function, # upper level objective function
                 if sol ≺ best
                     best = sol
                     # push!(convergence, best)
+
+                    stop = abs(best.f) < desired_accu && abs(best.F) < desired_accu
+                    stop && break
                 end
             end
 
         end
-
-        # println("sr = ", (success_rate/N))
-        stop = (success_rate/N) < 0.1
 
 
         push!(convergence, deepcopy(Population))
 
         iteration += 1
 
+        stop = stop || (success_rate/N) < 0.01 || nevals_ul > max_evals_ul
+
     end
 
-    println("iters = ", iteration)
-    println("Fevals= ", nevals_ul)
-    println("fevals= ", nevals_ll)
-    return convergence, best
+
+    return convergence, best, iteration, nevals_ul, nevals_ll
 end
