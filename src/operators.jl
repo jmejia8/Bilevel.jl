@@ -36,7 +36,7 @@ end
 function is_better(S1, S2)
     # S1 is better than S2
 
-    return 0.1(S1.F) + (S1.f) < 0.1(S2.F) + (S2.f)
+    return 0.05(S1.F) + (S1.f) < 0.05(S2.F) + (S2.f)
     # return abs(S1.F) + abs(S1.f) < abs(S2.F) + abs(S2.f)
 end
 
