@@ -1,6 +1,6 @@
 module Bilevel
 
-export optimize
+export optimize, QBCA
 
 include("structures.jl")
 include("externals.jl")
@@ -9,6 +9,7 @@ include("operators.jl")
 
 
 include("BCA.jl")
+include("QBCA.jl")
 
 
 end # module
