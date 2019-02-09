@@ -71,7 +71,7 @@ function optimize(parameters::QBCA; options = Options())
     best = getBest(Population)
     status = State(best)
 
-    status.F_calls   = nevals_ll
+    status.F_calls   = nevals_ul
     status.f_calls   = nevals_lll
     status.iteration = iteration
 
@@ -156,7 +156,7 @@ function optimize(parameters::QBCA; options = Options())
 
         push!(convergence, deepcopy(Population))
 
-        iteration += 1
+        status.iteration += 1
 
         stop = stop || (status.success_rate/N) < parameters.s_min || nevals_ul > parameters.F_calls_limit
 
