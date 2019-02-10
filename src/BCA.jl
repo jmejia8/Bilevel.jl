@@ -38,8 +38,8 @@ function getMass(U::Array, V::Array, α, β, searchType::Symbol)
     fitness = zeros(Float64, n, 2)
     
     for i = 1:n
-        fitness[i, 1] = α*V[i].F + V[i].f
-        fitness[i, 2] = U[i].F   + β*U[i].f
+        fitness[i, 1] = U[i].F   + β*U[i].f
+        fitness[i, 2] = α*V[i].F + V[i].f
     end
 
     return fitnessToMass(fitness, searchType)
@@ -54,8 +54,8 @@ function center(U::Array, V::Array, mass::Array{Float64,2})
     c_ll = zeros(Float64, d_ll)
     
     for i = 1:length(U)
-        c_ul += mass[i,2] * U[i].x
-        c_ll += mass[i,1] * V[i].y
+        c_ul += mass[i,1] * U[i].x
+        c_ll += mass[i,2] * V[i].y
     end
 
     return c_ul / sum(mass[:,1]), c_ll / sum(mass[:,2])
