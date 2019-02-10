@@ -23,13 +23,15 @@ end
 ################################################################################
 ################################################################################
 
-function optimize(parameters::QBCA; options = Options())
+function optimize(parameters::QBCA)
     F_ul      = parameters.F
     f_ll      = parameters.f
     bounds_ul = parameters.bounds_ul
     bounds_ll = parameters.bounds_ll
     stop_criteria = parameters.stop_criteria
     search_type   = parameters.search_type
+
+    options = parameters.options
 
     k = parameters.k
     N = parameters.N
@@ -79,7 +81,7 @@ function optimize(parameters::QBCA; options = Options())
 
     stop = false
 
-    α = 0.0
+    α = 0.05
     β = 0.05
 
     # start search
@@ -144,10 +146,10 @@ function optimize(parameters::QBCA; options = Options())
                 status.success_rate += 1
 
                 if sol ≺ best
-                    best = sol
-                    # push!(convergence, best)
+                    status.best_sol = sol
+                    # push!(convergence, status.best_sol)
 
-                    stop = abs(best.f) < options.f_tol && abs(best.F) < options.F_tol
+                    stop = abs(status.best_sol.f) < options.f_tol && abs(status.best_sol.F) < options.F_tol
                     stop && break
                 end
             end
