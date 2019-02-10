@@ -79,7 +79,8 @@ function optimize(parameters::QBCA; options = Options())
 
     stop = false
 
-    α = 0.05
+    α = 0.0
+    β = 0.05
 
     # start search
     while !stop
@@ -99,7 +100,7 @@ function optimize(parameters::QBCA; options = Options())
             V = getU(Population, k, I_ll, i, N)
             
             # generate center of mass
-            c_ul, c_ll, u_worst, v_worst = center(U, V, α, α, search_type)
+            c_ul, c_ll, u_worst, v_worst = center(U, V, α, β, search_type)
 
             # stepsize
             η_ul = η_ul_max * rand()
