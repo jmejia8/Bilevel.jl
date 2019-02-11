@@ -1,18 +1,41 @@
 using BilevelBenchmark
 
-include("../src/structures.jl")
 include("../src/externals.jl")
+include("../src/structures.jl")
+include("../src/display.jl")
 include("../src/tools.jl")
 include("../src/operators.jl")
 
 
-include("../src/qca.jl")
+include("../src/BCA.jl")
+include("../src/QBCA.jl")
 
 using CSVanalyzer
 import DelimitedFiles.writedlm
 
 
 function getBilevel(fnum)
+
+    if fnum == 0
+        L(w, a, b) = a + w^2 - a*cos( π * b * w)
+        f0(x,y; n=length(y)-1) = abs( 4x[n+1] - x[n+2] ) * y[end]^2 + sum(L.( abs.(x[1:n]-y[1:n]), x[n+1], x[n+2]))
+        F0(x,y; n=length(y)-1) = abs( 4x[n+1] - x[n+2] ) / (1+y[end]^2) + sum(L.( abs.(x[1:n]-y[1:n]), x[n+1], x[n+2]))
+
+        n = 3
+        bounds_ul = zeros(2, n+2)
+        bounds_ul[1,1:n] = -10ones(n)
+        bounds_ul[2,1:n] = 10ones(n)
+        bounds_ul[1, n+1:n+2] = [2, 2.0]
+        bounds_ul[2, n+1:n+2] = [10, 10.0]
+        
+        bounds_ll = ones(2, n+1)
+        bounds_ll[1,:] = -10ones(n+1)
+        bounds_ll[2,:] = 10ones(n+1)
+
+        return F0, f0, bounds_ul, bounds_ll
+
+    end
+
     D_ul = D_ll = 5
 
     bounds_ul, bounds_ll = bilevel_ranges(D_ul, D_ll, fnum)
@@ -31,11 +54,16 @@ function test()
 
 
 
-    for fnum = 6:7
+    for fnum = 1:8
         F, f, bounds_ul, bounds_ll = getBilevel(fnum)
+        method = QBCA(size(bounds_ul, 2); options = Options(F_tol=1e-4, f_tol=1e-4))
+        result = optimize(F, f, bounds_ul, bounds_ll, method)
+        b   = result.best_sol
+        iters  = result.iteration
+        nevals_ul = result.F_calls
+        nevals_ll = result.f_calls
+        
 
-        P, b, iters, nevals_ul, nevals_ll = optimize(F, f, bounds_ul = bounds_ul, bounds_ll=bounds_ll)
-    
         @printf("SMD%d \t F = %e \t f = %e \t ev_ul = %d \t ev_ll = %d\n", fnum, b.F, b.f, nevals_ul, nevals_ll)
     end
 
@@ -109,4 +137,4 @@ function saveData(output_dir="./")
 end
 
 
-saveData()
+test()
