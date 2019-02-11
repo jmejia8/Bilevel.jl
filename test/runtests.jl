@@ -7,9 +7,9 @@ function test1()
 
     bounds = Matrix([-1.0  1.0]')
 
-    method = QBCA(F, f, bounds,bounds, s_min=-1, N=20, F_calls_limit = 10000)
+    method = QBCA(size(bounds, 2); s_min=-1, N=20, F_calls_limit = 10000)
 
-    result = optimize(method)
+    result = optimize(F, f, bounds,bounds, method)
 
     best = result.best_sol
 
