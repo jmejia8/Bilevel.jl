@@ -23,20 +23,24 @@ end
 ################################################################################
 ################################################################################
 
-function optimize(parameters::QBCA)
-    F_ul      = parameters.F
-    f_ll      = parameters.f
-    bounds_ul = parameters.bounds_ul
-    bounds_ll = parameters.bounds_ll
-    stop_criteria = parameters.stop_criteria
-    search_type   = parameters.search_type
+function optimize(F_ul::Function, # upper level objective function
+                f_ll::Function, # lower level objective function
+                bounds_ul::Array,
+                bounds_ll::Array,
+                method::QBCA = QBCA(size(bounds_ul, 2))
+                )
+    bounds_ul = bounds_ul
+    bounds_ll = bounds_ll
+    search_type  = method.options.search_type
 
-    options = parameters.options
+    options = method.options
 
-    k = parameters.k
-    N = parameters.N
-    η_ul_max = parameters.η_ul_max
-    η_ll_max = parameters.η_ll_max
+    k = method.k
+    N = method.N
+    η_ul_max = method.η_ul_max
+    η_ll_max = method.η_ll_max
+    α = method.α
+    β = method.β
 
     D_ul, D_ll = size(bounds_ul, 2), size(bounds_ll, 2) 
     nevals_ul = 0
@@ -71,18 +75,14 @@ function optimize(parameters::QBCA)
 
     # best solution
     best = getBest(Population)
-    status = State(best)
+    status = State(best, Population)
 
     status.F_calls   = nevals_ul
     status.f_calls   = nevals_lll
     status.iteration = iteration
 
-    convergence = [deepcopy(Population)]
-
     stop = false
 
-    α = 0.05
-    β = 0.05
 
     # start search
     while !stop
@@ -147,7 +147,6 @@ function optimize(parameters::QBCA)
 
                 if sol ≺ best
                     status.best_sol = sol
-                    # push!(convergence, status.best_sol)
 
                     stop = abs(status.best_sol.f) < options.f_tol && abs(status.best_sol.F) < options.F_tol
                     stop && break
@@ -156,15 +155,14 @@ function optimize(parameters::QBCA)
 
         end
 
-
-        push!(convergence, deepcopy(Population))
+        status.population = deepcopy(Population)
 
         status.iteration += 1
 
-        stop = stop || (status.success_rate/N) < parameters.s_min || nevals_ul > parameters.F_calls_limit
+        stop = stop || (status.success_rate/N) < method.s_min || nevals_ul > options.F_calls_limit
 
     end
 
 
-    return status#convergence, best, iteration, nevals_ul, nevals_ll
+    return status
 end

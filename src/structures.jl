@@ -49,7 +49,7 @@ end
 #
 #####################################################
 
-struct Options
+mutable struct Options
     # upper level parameters
     x_tol::Real
     F_tol::Real
@@ -72,6 +72,7 @@ struct Options
     store_convergence::Bool
     show_results::Bool
     debug::Bool
+    search_type::Symbol
 end
 
 function Options(;
@@ -96,7 +97,8 @@ function Options(;
     iterations::Int = 1000,
     store_convergence::Bool = false,
     show_results::Bool = true,
-    debug::Bool = false)
+    debug::Bool = false,
+    search_type::Symbol=:minimize)
 
     
     Options(
@@ -111,7 +113,8 @@ function Options(;
         Int(iterations),
 
         # Results options
-        promote(store_convergence,show_results, debug)...
+        promote(store_convergence,show_results, debug)...,
+        Symbol(search_type)
     )
     
 end
@@ -154,6 +157,7 @@ end
 
 mutable struct State{T<:Int}
     best_sol
+    population::Array
 
     # upper level parameters
     F_calls::T
@@ -171,7 +175,8 @@ mutable struct State{T<:Int}
 end
 
 function State(
-        best_sol;
+        best_sol,
+        population::Array;
 
         # upper level parameters
         F_calls::Int = 0,
@@ -190,6 +195,7 @@ function State(
 
     State(#
         best_sol,
+        Array(population),
         
         # upper level parameters
         promote(
@@ -211,66 +217,48 @@ end
 #####################################################
 
 struct QBCA
-    F::Function # upper level objective function
-    f::Function # lower level objective function
-    bounds_ul::Array
-    bounds_ll::Array
-    stop_criteria::Function
-    search_type::Symbol
-
-    # general Options
+    # QBCA Options
     k::Int
     N::Int
     η_ul_max::Real
     η_ll_max::Real
+    α::Real
+    β::Real
     s_min::Real
 
-    # general Options
-    iterations::Int
-    F_calls_limit::Real
-    f_calls_limit::Real
     options::Options
 
 end
 
-function QBCA(
-        F::Function, # upper level objective function
-        f::Function, # lower level objective function
-        bounds_ul::Array,
-        bounds_ll::Array;
-        stop_criteria::Function = x -> false,
-        search_type::Symbol = :minimize,
-
+function QBCA(D_ul;
         # QBCA parameters
         k::Int = 3,
-        N::Int = 2k * size(bounds_ul, 2),
+        N::Int = 2k * D_ul,
         η_ul_max::Real = 2.0,
         η_ll_max::Real = 1.0 / η_ul_max,
         s_min::Real = 0.01,
+        α::Real = 0.01,
+        β::Real = 0.01,
 
 
         # general Options
-        iterations::Int  = 500size(bounds_ul, 2),
-        F_calls_limit::Real = 1000size(bounds_ul, 2),
+        iterations::Int  = 500D_ul,
+        F_calls_limit::Real = 1000D_ul,
         f_calls_limit::Real = Inf,
 
-        options::Options = Options(iterations = iterations,F_calls_limit = F_calls_limit,f_calls_limit = f_calls_limit)
+        options::Options = Options()
 
     )
 
-    QBCA(#
-        F, f,
-        promote(bounds_ul,bounds_ll)...,
-        stop_criteria,
-        Symbol(search_type),
+   
+    options.iterations = iterations
+    options.F_calls_limit = F_calls_limit
+    options.f_calls_limit = f_calls_limit
 
+    QBCA(#
         # general Options
         promote(k, N)...,
-        promote(η_ul_max,η_ll_max,s_min)...,
-
-        Int(iterations),
-        # general Options
-        promote(F_calls_limit,f_calls_limit)...,
+        promote(η_ul_max,η_ll_max,α, β, s_min)...,
         options
     )
 
