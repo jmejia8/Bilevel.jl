@@ -27,7 +27,8 @@ function optimize(F_ul::Function, # upper level objective function
                 f_ll::Function, # lower level objective function
                 bounds_ul::Array,
                 bounds_ll::Array,
-                method::QBCA = QBCA(size(bounds_ul, 2))
+                method::QBCA = QBCA(size(bounds_ul, 2)),
+                information::Information = Information(),
                 )
     bounds_ul = bounds_ul
     bounds_ll = bounds_ll
@@ -89,7 +90,7 @@ function optimize(F_ul::Function, # upper level objective function
         I_ul = randperm(N)
         I_ll = randperm(N)
 
-        status.success_rate = 0
+        status.success_rate = 0.0
 
         for i in 1:N
 
@@ -143,15 +144,18 @@ function optimize(F_ul::Function, # upper level objective function
 
             if sol ≺ Population[i]
                 Population[getWorstInd(Population)] = sol
-                status.success_rate += 1
+                status.success_rate += 1.0/N
 
                 if sol ≺ best
                     status.best_sol = sol
 
-                    stop = abs(status.best_sol.f) < options.f_tol && abs(status.best_sol.F) < options.F_tol
+                    stop = stop_check(status, information, options)
                     stop && break
                 end
             end
+            
+            stop = ull_call_limit_stop_check(status, information, options)
+            stop && break
 
         end
 
@@ -159,7 +163,7 @@ function optimize(F_ul::Function, # upper level objective function
 
         status.iteration += 1
 
-        stop = stop || (status.success_rate/N) < method.s_min || nevals_ul > options.F_calls_limit
+        stop = stop || stop_check(status, information, options)
 
     end
 

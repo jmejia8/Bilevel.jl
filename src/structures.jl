@@ -170,7 +170,7 @@ mutable struct State{T<:Int}
     h_calls::T
 
     iteration::T
-    success_rate::T
+    success_rate::Real
 
 end
 
@@ -190,7 +190,7 @@ function State(
         
         iteration::Int = 0,
 
-        success_rate::Int = 0,
+        success_rate::Real = 0,
     )
 
     State(#
@@ -205,8 +205,8 @@ function State(
             f_calls,
             g_calls,
             h_calls,
-            iteration,
-            success_rate)...)
+            iteration)...,
+            Real(success_rate))
     
 end
 
@@ -261,5 +261,24 @@ function QBCA(D_ul;
         promote(η_ul_max,η_ll_max,α, β, s_min)...,
         options
     )
+
+end
+
+struct Information
+    F_optimum::Real
+    f_optimum::Real
+
+    x_optimum::Array{Real}
+    y_optimum::Array{Real}
+end
+
+function Information(;#
+    F_optimum::Real = NaN,
+    f_optimum::Real = NaN,
+    x_optimum::Array{Real} = Real[],
+    y_optimum::Array{Real} = Real[],
+    )
+
+    Information(promote(F_optimum,f_optimum)..., x_optimum, y_optimum)
 
 end

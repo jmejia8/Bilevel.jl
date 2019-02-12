@@ -5,6 +5,7 @@ export optimize, QBCA
 include("structures.jl")
 include("externals.jl")
 include("display.jl")
+include("stop.jl")
 include("tools.jl")
 include("operators.jl")
 
