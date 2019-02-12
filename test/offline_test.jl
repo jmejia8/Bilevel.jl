@@ -3,6 +3,7 @@ using BilevelBenchmark
 include("../src/externals.jl")
 include("../src/structures.jl")
 include("../src/display.jl")
+include("../src/stop.jl")
 include("../src/tools.jl")
 include("../src/operators.jl")
 
@@ -57,7 +58,7 @@ function test()
     for fnum = 1:8
         F, f, bounds_ul, bounds_ll = getBilevel(fnum)
         method = QBCA(size(bounds_ul, 2); options = Options(F_tol=1e-4, f_tol=1e-4))
-        result = optimize(F, f, bounds_ul, bounds_ll, method)
+        result = optimize(F, f, bounds_ul, bounds_ll, method, Information(F_optimum=0.0, f_optimum=0.0))
         b   = result.best_sol
         iters  = result.iteration
         nevals_ul = result.F_calls
