@@ -37,7 +37,7 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     # first individual
     push!(population, child)
 
-    for i in 1:N
+    for i in 2:N
         x = X[i,:]
 
         y, fy = Metaheuristics.eca( z-> f(x, z), D_ll;
