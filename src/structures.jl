@@ -69,6 +69,7 @@ mutable struct Options
     h_calls_limit::Real
     
     iterations::Int
+    ll_iterations::Int
     store_convergence::Bool
     show_results::Bool
     debug::Bool
@@ -95,6 +96,7 @@ function Options(;
     h_calls_limit::Real = 0,
     
     iterations::Int = 1000,
+    ll_iterations::Int = 1000,
     store_convergence::Bool = false,
     show_results::Bool = true,
     debug::Bool = false,
@@ -110,7 +112,7 @@ function Options(;
         promote(y_tol, f_tol, g_tol, h_tol)...,
         promote(f_calls_limit, g_calls_limit, h_calls_limit)...,
         
-        Int(iterations),
+        promote(iterations,ll_iterations)...,
 
         # Results options
         promote(store_convergence,show_results, debug)...,
@@ -171,6 +173,7 @@ mutable struct State{T<:Int}
 
     iteration::T
     success_rate::Real
+    convergence::Array{State}
 
 end
 
@@ -191,6 +194,7 @@ function State(
         iteration::Int = 0,
 
         success_rate::Real = 0,
+        convergence::Array{State} = State[],
     )
 
     State(#
@@ -206,7 +210,8 @@ function State(
             g_calls,
             h_calls,
             iteration)...,
-            Real(success_rate))
+            Real(success_rate),
+            State[])
     
 end
 
@@ -243,15 +248,19 @@ function QBCA(D_ul;
 
         # general Options
         iterations::Int  = 500D_ul,
+        # lower level options
+        ll_iterations::Int = 1000,
+        
         F_calls_limit::Real = 1000D_ul,
         f_calls_limit::Real = Inf,
 
-        options::Options = Options()
+        options::Options = Options(),
 
     )
 
    
     options.iterations = iterations
+    options.ll_iterations = ll_iterations
     options.F_calls_limit = F_calls_limit
     options.f_calls_limit = f_calls_limit
 
