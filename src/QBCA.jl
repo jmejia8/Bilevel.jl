@@ -153,7 +153,7 @@ function optimize(F_ul::Function, # upper level objective function
                 Population[getWorstInd(Population)] = sol
                 status.success_rate += 1.0/N
 
-                if sol ≺ best
+                if sol ≺ status.best_sol
                     status.best_sol = sol
                     
                     options.store_convergence && push!(convergence, deepcopy(status))
