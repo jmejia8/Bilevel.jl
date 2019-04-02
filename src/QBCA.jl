@@ -84,6 +84,9 @@ function optimize(F_ul::Function, # upper level objective function
 
     stop = false
 
+    convergence = State[]
+
+    options.store_convergence && push!(convergence, deepcopy(status))
 
     # start search
     while !stop
@@ -127,7 +130,10 @@ function optimize(F_ul::Function, # upper level objective function
                 y1 = correct(y1, bounds_ll)
                 
                 # approx
-                r = Optim.optimize( z -> f(p, z), bounds_ll[1,:], bounds_ll[2,:], y1, Optim.Fminbox(Optim.BFGS()))
+                r = Optim.optimize( z -> f(p, z), bounds_ll[1,:], bounds_ll[2,:], y1,
+                                    Optim.Fminbox(Optim.BFGS()),
+                                    Optim.Options(iterations = options.ll_iterations, f_tol=options.f_tol)
+                                )
                 status.f_calls += r.f_calls
                 q = r.minimizer
                 fpq = r.minimum
@@ -148,7 +154,10 @@ function optimize(F_ul::Function, # upper level objective function
 
                 if sol ≺ best
                     status.best_sol = sol
+                    
+                    options.store_convergence && push!(convergence, deepcopy(status))
 
+                    # check stop condition
                     stop = stop_check(status, information, options)
                     stop && break
                 end
@@ -167,6 +176,7 @@ function optimize(F_ul::Function, # upper level objective function
 
     end
 
+    status.convergence = convergence
 
     return status
 end
