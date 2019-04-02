@@ -130,9 +130,10 @@ function optimize(F_ul::Function, # upper level objective function
                 y1 = correct(y1, bounds_ll)
                 
                 # approx
-                r = Optim.optimize( z -> f(p, z), bounds_ll[1,:], bounds_ll[2,:], y1,
-                                    Optim.Fminbox(Optim.BFGS()),
-                                    Optim.Options(iterations = options.ll_iterations, f_tol=options.f_tol)
+                r = Optim.optimize( z -> f(p, z), bounds_ll[1,:],
+                                                  bounds_ll[2,:],
+                                                  y1,
+                                                  Optim.Fminbox(Optim.BFGS())
                                 )
                 status.f_calls += r.f_calls
                 q = r.minimizer
