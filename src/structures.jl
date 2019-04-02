@@ -242,8 +242,8 @@ function QBCA(D_ul;
         η_ul_max::Real = 2.0,
         η_ll_max::Real = 1.0 / η_ul_max,
         s_min::Real = 0.01,
-        α::Real = 0.01,
-        β::Real = 0.01,
+        α::Real = 0.05,
+        β::Real = 0.05,
 
 
         # general Options
