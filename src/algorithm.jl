@@ -9,6 +9,7 @@ function optimize(F_ul::Function, # upper level objective function
       status = method.initial_state
       information = method.information
       options = method.options
+      final_stage! = method.final_stage!
       
       t::Int = 0
       while !method.stop_criteria(status, information, options)

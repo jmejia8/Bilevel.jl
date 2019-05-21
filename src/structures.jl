@@ -296,18 +296,20 @@ mutable struct Algorithm
     initial_state::State
     update_state!::Function
     lower_level_optimizer::Function
-    ≺::Function
+    is_better::Function
     stop_criteria::Function
+    final_stage!::Function
     information::Information
     options::Options
 end
 
 function Algorithm(   initialize::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
-                   initial_state::State    = State([]),
+                   initial_state::State    = State(nothing, []),
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
-                       is_better::Function = ≺, # is_better(a, b)  = true if x is better that y 
+                       is_better::Function = is_better, # is_better(a, b)  = true if x is better that y 
                    stop_criteria::Function = stop_check,
+                    final_stage!::Function = _4(kwargs...) = nothing,
                      information::Information = Information(),
                          options::Options  = Options())
     
@@ -318,6 +320,7 @@ function Algorithm(   initialize::Function = _1(kwargs...) = nothing,
                 lower_level_optimizer,
                 is_better,
                 stop_criteria,
+                final_stage!,
                 information,
                 options)
 
