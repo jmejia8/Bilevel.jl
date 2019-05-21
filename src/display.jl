@@ -40,9 +40,9 @@ function display(method::QBCA)
     @printf("| s_min: %g\n", method.s_min)
 
     # general Options
-    @printf("|    iterations: %d\n", method.iterations)
-    @printf("| F calls limit: %d\n", method.F_calls_limit)
-    @printf("| f calls limit: %d\n", method.f_calls_limit)
+    @printf("|    iterations: %d\n", method.options.iterations)
+    @printf("| F calls limit: %d\n", method.options.F_calls_limit)
+    @printf("| f calls limit: %d\n", method.options.f_calls_limit)
     println("+============================+")
 end
 
