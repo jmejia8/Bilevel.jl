@@ -28,5 +28,18 @@ function test2()
     ≈(best.F, 0.8, atol= 1e-1) && ≈(best.f, 0.0, atol=1e-5) && length(result.convergence) > 0
 end
 
+function test3()
+    method = Algorithm()
+    r = optimize((x,y) -> sum(x + y),
+             (x,y) -> sum(x + y),
+             [0 0; 1 1],
+             [0 0; 1 1],
+             method
+        )
+
+    true
+end
+
 @test test1()
 @test test2()
+@test test3()
