@@ -4,7 +4,7 @@
 #
 #####################################################
 
-mutable struct xf_indiv # Single Objective
+mutable struct xf_indiv <: AbstractSolution # Single Objective
     x::Vector{Float64}
     y::Vector{Float64}
     F::Float64

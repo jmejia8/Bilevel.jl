@@ -1,4 +1,4 @@
-struct ParametersTemplate
+struct ParametersTemplate <: AbstractParameters
     N::Int # population size
 end
 
@@ -15,7 +15,7 @@ function lower_level_optimizer(problem::Problem,status::State,information::Infor
     # some stuff here
 end
 
-function is_better(solution_1, solution_2) # solution_1 is better that solution_2 
+function is_better(solution_1::AbstractSolution, solution_2::AbstractSolution) # solution_1 is better that solution_2 
     solution_1 ≺ solution_2
 end
 
