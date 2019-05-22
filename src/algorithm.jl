@@ -6,6 +6,8 @@ function optimize(F_ul::Function, # upper level objective function
                   information::Information = Information()
                   )
 
+      problem = Problem(F_ul,f_ll,bounds_ul,bounds_ll)
+
       status = method.initial_state
       information = method.information
       options = method.options
@@ -15,7 +17,7 @@ function optimize(F_ul::Function, # upper level objective function
       while !method.stop_criteria(status, information, options)
             t += 1
 
-            update_state!(F_ul,f_ll,bounds_ul,bounds_ll,status,information,method.options,t)
+            update_state!(problem,status,information,method.options,t)
             
             debug && display(status)
             

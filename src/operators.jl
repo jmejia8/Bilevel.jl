@@ -33,7 +33,7 @@ function Selection(Old::xfg_indiv, New::xfg_indiv)
     return is_better(New, Old)
 end
 
-function is_better(S1, S2)
+function is_better(S1::xf_indiv, S2::xf_indiv)
     # S1 is better than S2
 
     return 0.05(S1.F) + (S1.f) < 0.05(S2.F) + (S2.f)

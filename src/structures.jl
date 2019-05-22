@@ -215,6 +215,13 @@ function State(
     
 end
 
+struct Problem
+    F_ul::Function,
+    f_ll::Function,
+    bounds_ul::Array,
+    bounds_ll::Array,
+end
+
 #####################################################
 #
 #         STRUCTURES FOR THE ALGORITHMS
@@ -293,6 +300,7 @@ function Information(;#
 end
 
 mutable struct Algorithm
+    parameters
     initial_state::State
     update_state!::Function
     lower_level_optimizer::Function
@@ -303,7 +311,8 @@ mutable struct Algorithm
     options::Options
 end
 
-function Algorithm(   initialize::Function = _1(kwargs...) = nothing,
+function Algorithm(   parameters,
+                      initialize::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
                    initial_state::State    = State(nothing, []),
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
@@ -315,7 +324,8 @@ function Algorithm(   initialize::Function = _1(kwargs...) = nothing,
     
 
 
-    Algorithm(  initial_state,
+    Algorithm(  parameters,
+                initial_state,
                 update_state!,
                 lower_level_optimizer,
                 is_better,

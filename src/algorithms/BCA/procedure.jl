@@ -1,0 +1,6 @@
+initialize
+update_state
+lower_level_optimizer
+is_better
+stop_criteria
+final_stage
