@@ -1,25 +1,17 @@
-struct ParameterTemplate
+struct ParametersTemplate
     N::Int # population size
 end
 
 
-function initialize(problem::Problem, parameters)
+function initialize!(problem::Problem, parameters)
     # some stuff here
 end
 
-function update_state!(problem::Problem,
-                    status::State,
-                information::Information,
-                    options::Options,
-                        t::Int)
+function update_state!(problem::Problem,status::State,information::Information,options::Options,t::Int)
     # some stuff here
 end
 
-function lower_level_optimizer(problem::Problem,
-                            status::State,
-                        information::Information,
-                            options::Options,
-                                t::Int)
+function lower_level_optimizer(problem::Problem,status::State,information::Information,options::Options,t::Int)
     # some stuff here
 end
 

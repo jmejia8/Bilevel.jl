@@ -216,10 +216,34 @@ function State(
 end
 
 struct Problem
-    F_ul::Function,
-    f_ll::Function,
-    bounds_ul::Array,
-    bounds_ll::Array,
+    F::Function
+    f::Function
+    bounds_ul::Array
+    bounds_ll::Array
+    G::Function
+    g::Function
+    type::Symbol
+end
+
+function Problem(F::Function,
+                f::Function,
+                bounds_ul::Array,
+                bounds_ll::Array;
+                G::Function = _1_(x,y) = 0,
+                g::Function = _2_(x,y) = 0)
+
+    
+    type::Symbol = :constrained
+
+    if nameof(G) == :_1_ && nameof(G) == :_2_
+        type = :unconstrained
+    elseif nameof(G) == :_1_
+        type = :constrained_ll
+    elseif nameof(G) == :_2_
+        type = :constrained_ul
+    end
+    
+    Problem(F, f, bounds_ul, bounds_ll, G, g, type)
 end
 
 #####################################################
@@ -312,9 +336,9 @@ mutable struct Algorithm
 end
 
 function Algorithm(   parameters,
-                      initialize::Function = _1(kwargs...) = nothing,
-                   update_state!::Function = _2(kwargs...) = nothing,
                    initial_state::State    = State(nothing, []),
+                      initialize!::Function = _1(kwargs...) = nothing;
+                   update_state!::Function = _2(kwargs...) = nothing,
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
                        is_better::Function = is_better, # is_better(a, b)  = true if x is better that y 
                    stop_criteria::Function = stop_check,

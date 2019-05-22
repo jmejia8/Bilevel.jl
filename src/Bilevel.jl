@@ -1,6 +1,6 @@
 module Bilevel
 
-export Algorithm, Information, State, Options, xf_indiv
+export Algorithm, Information, State, Options, xf_indiv, Problem
 export optimize, QBCA
 
 include("structures.jl")
@@ -14,6 +14,10 @@ include("operators.jl")
 include("BCA.jl")
 include("QBCA.jl")
 include("algorithm.jl")
+
+include("algorithms/Template/procedure.jl")
+
+
 
 
 end # module
