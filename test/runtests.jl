@@ -29,13 +29,15 @@ function test2()
 end
 
 function test3()
-    method = Algorithm()
+    method = Algorithm(Bilevel.ParametersTemplate)
     r = optimize((x,y) -> sum(x + y),
              (x,y) -> sum(x + y),
              [0 0; 1 1],
              [0 0; 1 1],
              method
         )
+
+    display(r)
 
     true
 end
