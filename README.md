@@ -49,6 +49,59 @@ println(best.F) # UL objective function value F(x, y)
 println(best.f) # LL objective function value f(x, y)
 ```
 
+### BCA Framework
+
+This framework uses the center of mass concept to generate new solutions at upper
+level.
+
+
+#### Example
+
+Solve the following bilevel optimization problem:
+
+```julia
+F(x,y)  = sum((x + y).^2) # upper level
+f(x,y)  = sum((x - y).^2) # lower level
+
+# bounds
+ul_bounds = [-1 -1; 1 1.0] # -1 <= x[i] <= 1
+ll_bounds = [-1 -1; 1 1.0] # -1 <= y[j] <= 1
+```
+
+First, specify the options for BCA:
+
+```julia
+options = Options(F_calls_limit=1000,
+                  f_calls_limit=Int(1e6),
+                  debug=true)
+```
+
+After that, define the BCA parameters:
+
+```julia
+
+BCA = BCAOperators.BCAFW(N =30, K=7, η_max=2.0) # BCA Framework definition
+```
+
+Now, we are able to define the algorithm structure:
+
+```julia
+
+method = Algorithm(BCA;
+            initialize! = BCAOperators.initialize!,
+            update_state! = BCAOperators.update_state!,
+            options = options)
+```
+
+Finally, optimize and get results:
+
+```julia
+results = optimize(F, f, ul_bounds, ll_bounds, method)
+
+display(results)
+
+```
+
 ## TODO
 * Documentation
 * Bilevel Centers Algorithm 
