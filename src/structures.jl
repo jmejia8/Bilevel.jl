@@ -325,7 +325,7 @@ end
 
 mutable struct Algorithm
     parameters
-    initial_state::State
+    status::State
     update_state!::Function
     lower_level_optimizer::Function
     is_better::Function

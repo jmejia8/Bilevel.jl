@@ -29,7 +29,7 @@ function test2()
 end
 
 function test3()
-    method = Algorithm(Bilevel.ParametersTemplate)
+    method = Algorithm(rand(2))
     r = optimize((x,y) -> sum(x + y),
              (x,y) -> sum(x + y),
              [0 0; 1 1],
