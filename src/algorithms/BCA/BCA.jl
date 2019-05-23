@@ -1,6 +1,7 @@
 module BCAOperators
 
-import  ..stop_check, ..≺
+import  ..stop_check, ..Selection
+
 
 function initialize!(problem, parameters)
     # some stuff here
@@ -10,7 +11,7 @@ function update_state!(problem,status,information,options,t)
     # some stuff here
 end
 
-function lower_level_optimizer(problem,status,information,options,t)
+function lower_level_optimizer(x,problem,status,information,options,t)
     # some stuff here
 end
 

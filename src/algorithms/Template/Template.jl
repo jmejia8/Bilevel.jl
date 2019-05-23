@@ -1,21 +1,20 @@
 module BCAOperators
 
-import  ..stop_check, ..Selection
+import  ..stop_check, ..Selection,..init_population
+
+struct Parameters
+    N::Int64
+end
 
 function initialize!(problem, parameters, status)
-    p = problem
-    population, f_calls = init_population(p.F, p.f, parameters.N, p.bounds_ul,p.bounds_ll)
-    
-    status.population = population
-    status.f_calls = f_calls
-
+    # some stuff here
 end
 
 function update_state!(problem,status,information,options,t)
     # some stuff here
 end
 
-function lower_level_optimizer(problem,status,information,options,t)
+function lower_level_optimizer(x,problem,status,information,options,t)
     # some stuff here
 end
 

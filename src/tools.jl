@@ -69,17 +69,17 @@ end
 #
 #####################################################
 
-function generateChild(x::Vector{Float64}, y::Vector{Float64}, FResult::Float64, fResult::Float64)
+function generateChild(x::Vector{Float64}, y, FResult::Float64, fResult::Float64)
     return xf_indiv(x, y, FResult, fResult)
 end
 
-function generateChild(x::Vector{Float64}, y::Vector{Float64}, FResult::Tuple{Float64,Array{Float64,1}}, fResult::Tuple{Float64,Array{Float64,1}})
+function generateChild(x::Vector{Float64}, y, FResult::Tuple{Float64,Array{Float64,1}}, fResult::Tuple{Float64,Array{Float64,1}})
     F, G = FResult
     f, g = fResult
     return xfg_indiv(x, y, F, f, G, g)
 end
 
-function generateChild(x::Vector{Float64}, y::Vector{Float64}, FResult::Tuple{Float64,Array{Float64,1},Array{Float64,1}}, fResult::Tuple{Float64,Array{Float64,1},Array{Float64,1}})
+function generateChild(x::Vector{Float64}, y, FResult::Tuple{Float64,Array{Float64,1},Array{Float64,1}}, fResult::Tuple{Float64,Array{Float64,1},Array{Float64,1}})
     F, G, H = FResult
     f, g, h = fResult
     return xfgh_indiv(x, y, F, f, G, g, H, h)

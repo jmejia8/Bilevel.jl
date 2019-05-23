@@ -2,27 +2,30 @@ function optimize(F_ul::Function, # upper level objective function
                   f_ll::Function, # lower level objective function
                   bounds_ul::Array,
                   bounds_ll::Array,
-                  method::Algorithm,
-                  information::Information = Information()
+                  method::Algorithm
                   )
 
       problem = Problem(F_ul,f_ll,bounds_ul,bounds_ll)
+
+      method.initialize!(problem, method.parameters, method.status, method.information, method.options)
+
       #####################################
       # common methods
       #####################################
-      status = method.initial_state
+      status = method.status
       information = method.information
       options = method.options
+      update_state! = method.update_state!
       final_stage! = method.final_stage!
       ###################################
       
-      t::Int = 0
+      status.iteration = 0
       while !method.stop_criteria(status, information, options)
-            t += 1
+            status.iteration += 1
 
-            update_state!(problem, status, information, options, t)
+            update_state!(problem,method.parameters,method.status,method.information,method.options,status.iteration)
             
-            debug && display(status)
+            options.debug && display(status)
             
       end
 

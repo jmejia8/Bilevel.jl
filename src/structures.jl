@@ -6,14 +6,14 @@
 
 mutable struct xf_indiv <: AbstractSolution # Single Objective
     x::Vector{Float64}
-    y::Vector{Float64}
+    y
     F::Float64
     f::Float64
 end
 
 mutable struct xfg_indiv # Single Objective Constraied
     x::Vector{Float64}
-    y::Vector{Float64}
+    y
     F::Float64
     f::Float64
     G::Vector{Float64}
@@ -22,7 +22,7 @@ end
 
 mutable struct xfgh_indiv # Single Objective Constraied
     x::Vector{Float64}
-    y::Vector{Float64}
+    y
     F::Float64
     f::Float64
     G::Vector{Float64}
@@ -33,7 +33,7 @@ end
 
 mutable struct xFgh_indiv # multi Objective Constraied
     x::Vector{Float64}
-    y::Vector{Float64}
+    y
     F::Vector{Float64}
     f::Vector{Float64}
     G::Vector{Float64}
@@ -51,22 +51,22 @@ end
 
 mutable struct Options
     # upper level parameters
-    x_tol::Real
-    F_tol::Real
-    G_tol::Real
-    H_tol::Real
-    F_calls_limit::Real
-    G_calls_limit::Real
-    H_calls_limit::Real
+    x_tol::Float64
+    F_tol::Float64
+    G_tol::Float64
+    H_tol::Float64
+    F_calls_limit::Float64
+    G_calls_limit::Float64
+    H_calls_limit::Float64
     
     # lower level parameters
-    y_tol::Real
-    f_tol::Real
-    g_tol::Real
-    h_tol::Real
-    f_calls_limit::Real
-    g_calls_limit::Real
-    h_calls_limit::Real
+    y_tol::Float64
+    f_tol::Float64
+    g_tol::Float64
+    h_tol::Float64
+    f_calls_limit::Float64
+    g_calls_limit::Float64
+    h_calls_limit::Float64
     
     iterations::Int
     ll_iterations::Int
@@ -129,26 +129,57 @@ end
 
 mutable struct Results
     # upper level parameters
-    Δx::Real
-    ΔF::Real
-    ΔG::Real
-    ΔH::Real
+    Δx::Float64
+    ΔF::Float64
+    ΔG::Float64
+    ΔH::Float64
     F_calls::Int
     G_calls::Int
     H_calls::Int
     
     # lower level parameters
-    Δy::Real
-    Δf::Real
-    Δg::Real
-    Δh::Real
+    Δy::Float64
+    Δf::Float64
+    Δg::Float64
+    Δh::Float64
     f_calls::Int
     g_calls::Int
     h_calls::Int
     
     iterations::Int
-    best_sol::DataType
+    best_sol
     # convergence::
+end
+
+mutable struct LLResult
+    # lower level info
+    y
+    f
+    Δy::Float64
+    Δf::Float64
+    Δg::Float64
+    Δh::Float64
+    f_calls::Int
+    g_calls::Int
+    h_calls::Int
+    
+    iterations::Int
+    other
+end
+
+function LLResult(y,f;Δy = 0.0,
+                    Δf = 0.0,
+                    Δg = 0.0,
+                    Δh = 0.0,
+                    f_calls = 0,
+                    g_calls = 0,
+                    h_calls = 0,
+                    iterations=0,
+                    other=nothing)
+
+    LLResult(y,f,promote(Δy,Δf,Δg,Δh)...,
+              promote(f_calls,g_calls,h_calls,iterations)...,
+              other)
 end
 
 #####################################################
@@ -326,6 +357,7 @@ end
 mutable struct Algorithm
     parameters
     status::State
+    initialize!::Function
     update_state!::Function
     lower_level_optimizer::Function
     is_better::Function
@@ -335,9 +367,9 @@ mutable struct Algorithm
     options::Options
 end
 
-function Algorithm(   parameters,
+function Algorithm(   parameters;
                    initial_state::State    = State(nothing, []),
-                      initialize!::Function = _1(kwargs...) = nothing;
+                      initialize!::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
                        is_better::Function = is_better, # is_better(a, b)  = true if x is better that y 
@@ -350,6 +382,7 @@ function Algorithm(   parameters,
 
     Algorithm(  parameters,
                 initial_state,
+                initialize!,
                 update_state!,
                 lower_level_optimizer,
                 is_better,
