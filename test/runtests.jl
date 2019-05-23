@@ -29,11 +29,22 @@ function test2()
 end
 
 function test3()
-    method = Algorithm(rand(2))
-    r = optimize((x,y) -> sum(x + y),
-             (x,y) -> sum(x + y),
-             [0 0; 1 1],
-             [0 0; 1 1],
+
+    options = Options(F_calls_limit=1000,
+                      f_calls_limit=Int(1e6),
+                      debug=true)
+
+    BCA = BCAOperators.BCAFW(N =30)
+
+    method = Algorithm(BCA;
+                initialize! = BCAOperators.initialize!,
+                update_state! = BCAOperators.update_state!,
+                options = options)
+
+    @time r = optimize((x,y) -> sum((x + y).^2),
+             (x,y) -> sum((x - y).^2),
+             [-1 -1; 1 1.0],
+             [-1 -1; 1 1.0],
              method
         )
 
