@@ -31,14 +31,17 @@ end
 function test3()
 
     options = Options(F_calls_limit=1000,
-                      f_calls_limit=Int(1e6),
-                      debug=false,store_convergence=true)
+                        f_calls_limit=Int(1e6),
+                        debug=false,store_convergence=true)
 
     BCA = BCAOperators.BCAFW(N =30)
 
     method = Algorithm(BCA;
                 initialize! = BCAOperators.initialize!,
                 update_state! = BCAOperators.update_state!,
+                lower_level_optimizer = BCAOperators.lower_level_optimizer,
+                is_better = BCAOperators.is_better,
+                stop_criteria = BCAOperators.stop_criteria,
                 options = options)
 
     r = optimize((x,y) -> sum((x + y).^2),
