@@ -7,7 +7,7 @@ function optimize(F_ul::Function, # upper level objective function
 
       problem = Problem(F_ul,f_ll,bounds_ul,bounds_ll)
       engine = method.engine
-      engine.initialize!(problem, method.parameters, method.status, method.information, method.options)
+      engine.initialize!(problem, engine, method.parameters, method.status, method.information, method.options)
 
       #####################################
       # common methods

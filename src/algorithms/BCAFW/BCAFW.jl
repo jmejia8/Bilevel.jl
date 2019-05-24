@@ -12,7 +12,7 @@ end
 
 BCAFW(;N=100, K = 7, η_max = 2.0) = BCAFW(N, K, η_max)
 
-function initialize!(problem,parameters,status,information,options)
+function initialize!(problem,engine,parameters,status,information,options)
     p = problem
 
     a = p.bounds_ul[1,:]
@@ -25,7 +25,7 @@ function initialize!(problem,parameters,status,information,options)
 
     for i in 1:parameters.N
         x = X[i,:]
-        ll_result = lower_level_optimizer(x, p, status, information, options, 0)
+        ll_result = engine.lower_level_optimizer(x, p, status, information, options, 0)
 
         y = ll_result.y
 
