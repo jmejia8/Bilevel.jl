@@ -26,6 +26,13 @@ function optimize(F_ul::Function, # upper level objective function
             update_state!(problem,method.parameters,method.status,method.information,method.options,status.iteration)
             
             options.debug && display(status)
+
+
+            if options.store_convergence
+                  st = deepcopy(status)
+                  empty!(st.convergence)
+                  push!(status.convergence, st)
+            end
             
       end
 
