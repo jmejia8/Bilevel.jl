@@ -32,7 +32,7 @@ function test3()
 
     options = Options(F_calls_limit=1000,
                       f_calls_limit=Int(1e6),
-                      debug=true)
+                      debug=false,store_convergence=true)
 
     BCA = BCAOperators.BCAFW(N =30)
 
@@ -41,14 +41,12 @@ function test3()
                 update_state! = BCAOperators.update_state!,
                 options = options)
 
-    @time r = optimize((x,y) -> sum((x + y).^2),
-             (x,y) -> sum((x - y).^2),
+    r = optimize((x,y) -> sum((x + y).^2),
+             (x,y) -> sum((sin.(4π*x) - y).^2),
              [-1 -1; 1 1.0],
              [-1 -1; 1 1.0],
              method
         )
-
-    display(r)
 
     true
 end
