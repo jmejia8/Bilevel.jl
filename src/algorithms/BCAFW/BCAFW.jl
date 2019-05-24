@@ -43,9 +43,12 @@ function initialize!(problem,parameters,status,information,options)
     status.best_sol = population[1]
 end
 
-function update_state!(problem,parameters,status,information,options,t)
+function update_state!(problem,engine,parameters,status,information,options,t)
     I = randperm(parameters.N)
     c = zeros(size(problem.bounds_ul,2))
+
+
+    is_better = engine.is_better
 
     i::Int = 1
     for sol in status.population
@@ -75,7 +78,7 @@ function update_state!(problem,parameters,status,information,options,t)
         ########################################################################
         # Nested optimization solution
         ########################################################################
-        ll_result = lower_level_optimizer(p,problem,status,information,options,0)
+        ll_result = engine.lower_level_optimizer(p,problem,status,information,options,0)
         status.f_calls += ll_result.f_calls
         q = ll_result.y
         ########################################################################

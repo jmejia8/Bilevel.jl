@@ -354,17 +354,32 @@ function Information(;#
 
 end
 
-mutable struct Algorithm
-    parameters
-    status::State
+struct Engine
     initialize!::Function
     update_state!::Function
     lower_level_optimizer::Function
     is_better::Function
     stop_criteria::Function
     final_stage!::Function
+end
+
+function Engine(;initialize!::Function = _1(kwargs...) = nothing,
+                   update_state!::Function = _2(kwargs...) = nothing,
+           lower_level_optimizer::Function = _3(kwargs...) = nothing,
+                       is_better::Function = _4(kwargs...) = false, 
+                   stop_criteria::Function = _5(kwargs...) = nothing,
+                    final_stage!::Function = _6(kwargs...) = nothing)
+    
+    Engine(initialize!,update_state!,lower_level_optimizer,
+           is_better,stop_criteria,final_stage!)
+end
+
+mutable struct Algorithm
+    parameters
+    status::State
     information::Information
     options::Options
+    engine::Engine
 end
 
 function Algorithm(   parameters;
@@ -372,23 +387,33 @@ function Algorithm(   parameters;
                       initialize!::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
-                       is_better::Function = is_better, # is_better(a, b)  = true if x is better that y 
+                       # is_better(a, b)  = true if x is better that y 
+                       is_better::Function = _5(kwargs...) = false,
                    stop_criteria::Function = stop_check,
                     final_stage!::Function = _4(kwargs...) = nothing,
                      information::Information = Information(),
                          options::Options  = Options())
     
 
-
-    Algorithm(  parameters,
-                initial_state,
-                initialize!,
+    engine = Engine(initialize!,
                 update_state!,
                 lower_level_optimizer,
                 is_better,
                 stop_criteria,
-                final_stage!,
+                final_stage!)
+
+    Algorithm(  parameters,
+                initial_state,
                 information,
-                options)
+                options,
+                engine)
 
 end
+
+
+# function Algorithm(   parameters;
+#                    initial_state::State    = State(nothing, []),
+#                      information::Information = Information(),
+#                          options::Options  = Options(),
+#                          engine::Engine = Engine())
+# end
