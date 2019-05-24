@@ -89,10 +89,10 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         # comparing new solution
         ########################################################################
 
-        if is_better(new_sol, sol)
+        if engine.is_better(new_sol, sol)
             status.population[getWorstInd(status.population, is_better)] = new_sol
 
-            if is_better(new_sol, status.best_sol)
+            if engine.is_better(new_sol, status.best_sol)
                 status.best_sol = new_sol
             end
         end
