@@ -73,7 +73,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         u = worst(U, is_better)
 
         p = x + η_ul * (c - u)
-        correctSol!(p, problem.bounds_ul[1,:], problem.bounds_ul[2,:])
+        correctSol!(p, c, problem.bounds_ul[1,:], problem.bounds_ul[2,:])
 
         ########################################################################
         # Nested optimization solution
