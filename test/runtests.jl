@@ -32,23 +32,23 @@ function test3()
 
     options = Options(F_calls_limit=1000,
                         f_calls_limit=Int(1e6),
-                        debug=false,store_convergence=true)
+                        debug=false,store_convergence=false)
 
     BCA = BCAOperators.BCAFW(N =30)
 
     method = Algorithm(BCA;
-                initialize! = BCAOperators.initialize!,
-                update_state! = BCAOperators.update_state!,
-                lower_level_optimizer = BCAOperators.lower_level_optimizer,
-                is_better = BCAOperators.is_better,
-                stop_criteria = BCAOperators.stop_criteria,
-                options = options)
+                        initialize! = BCAOperators.initialize!,
+                        update_state! = BCAOperators.update_state!,
+                        lower_level_optimizer = BCAOperators.lower_level_optimizer,
+                        is_better = BCAOperators.is_better,
+                        stop_criteria = BCAOperators.stop_criteria,
+                        options = options)
 
     r = optimize((x,y) -> sum((x + y).^2),
-             (x,y) -> sum((sin.(4π*x) - y).^2),
-             [-1 -1; 1 1.0],
-             [-1 -1; 1 1.0],
-             method
+                (x,y) -> sum((sin.(4π*x) - y).^2),
+                [-1 -1; 1 1.0],
+                [-1 -1; 1 1.0],
+                method
         )
 
     true
