@@ -48,8 +48,6 @@ function update_state!(problem,engine,parameters,status,information,options,t)
     c = zeros(size(problem.bounds_ul,2))
 
 
-    is_better = engine.is_better
-
     i::Int = 1
     for sol in status.population
         x = sol.x
@@ -61,7 +59,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         U = getU(status.population, parameters.K, I, i, parameters.N); i+=1
         
         # generate center of mass
-        center!(c,U)
+        c = center!(c,U)
 
         ########################################################################
         # New upper level vector
@@ -70,7 +68,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         η_ul = parameters.η_max * rand()
 
         # u: worst element in U
-        u = worst(U, is_better)
+        u = worst(U, engine.is_better)
 
         p = x + η_ul * (c - u)
         correctSol!(p, c, problem.bounds_ul[1,:], problem.bounds_ul[2,:])
@@ -90,7 +88,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         ########################################################################
 
         if engine.is_better(new_sol, sol)
-            status.population[getWorstInd(status.population, is_better)] = new_sol
+            status.population[getWorstInd(status.population, engine.is_better)] = new_sol
 
             if engine.is_better(new_sol, status.best_sol)
                 status.best_sol = new_sol
@@ -117,7 +115,7 @@ function lower_level_optimizer(x,problem,status,information,options,t)
 end
 
 function is_better(solution_1, solution_2) # solution_1 is better that solution_2 
-    Selection(solution_2, solution_1)
+    return solution_1.F < solution_2.F
 end
 
 function stop_criteria(status, information, options)

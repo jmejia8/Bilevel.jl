@@ -1,11 +1,25 @@
-function center!(c, U)
-    m = 0.0
-    for u = U
-        c += u.f * u.x
-        m += u.f
+function fitnessToMass(U)
+    fitness = zeros(length(U))
+    for i = 1:length(U)
+        fitness[i] = U[i].f
     end
 
-    return c ./ m
+    m = minimum(fitness)
+    
+    m < 0 && (fitness = 2abs(m) .+ fitness)  
+
+    fitness = 2.0maximum(fitness) .- fitness
+
+    return fitness
+end
+
+function center!(c, U)
+    m = fitnessToMass(U)
+    for i = 1:length(U)
+        c += m[i] * U[i].x
+    end
+
+    return c ./ sum(m)
 end
 
 function correctSol!(x, a, b)
@@ -27,14 +41,22 @@ end
 
 function correctSol!(x,c, a, b)
     # Correct solution
+
     for i = 1:length(x)
         if a[i] <= x[i] <= b[i]
             continue
         end
 
-        x[i] = c[i]
+        if a[i] <= c[i] <= b[i]
+            x[i] = c[i]
+        elseif x[i] < a[i]
+            x[i] = a[i]
+        else
+            x[i] = b[i]
+        end
+
     end
-    
+
     return x
 end
 
