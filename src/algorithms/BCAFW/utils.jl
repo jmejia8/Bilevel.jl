@@ -25,6 +25,19 @@ function correctSol!(x, a, b)
     return x
 end
 
+function correctSol!(x,c, a, b)
+    # Correct solution
+    for i = 1:length(x)
+        if a[i] <= x[i] <= b[i]
+            continue
+        end
+
+        x[i] = c[i]
+    end
+    
+    return x
+end
+
 function worst(U,is_better)
     u_worst = U[1]
     for u in U
