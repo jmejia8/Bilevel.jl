@@ -1,7 +1,7 @@
 name = "Bilevel"
 uuid = "345d3ba6-d16c-11e8-3a43-33eb7bceec82"
 authors = ["Jesus Mejia <jesusmejded@gmail.com>"]
-version = "0.2.5"
+version = "0.2.6"
 
 [deps]
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
