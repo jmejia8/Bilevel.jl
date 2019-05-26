@@ -1,7 +1,7 @@
 function fitnessToMass(U)
     fitness = zeros(length(U))
     for i = 1:length(U)
-        fitness[i] = U[i].f
+        fitness[i] = U[i].F
     end
 
     m = minimum(fitness)
