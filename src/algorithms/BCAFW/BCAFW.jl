@@ -44,7 +44,8 @@ function initialize!(problem,engine,parameters,status,information,options)
 end
 
 function update_state!(problem,engine,parameters,status,information,options,t)
-    I = randperm(parameters.N)
+    N = length(status.population)
+    I = randperm(N)
     c = zeros(size(problem.bounds_ul,2))
 
 
@@ -56,7 +57,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         # center of mass
         ########################################################################
         # generate U masses
-        U = getU(status.population, parameters.K, I, i, parameters.N); i+=1
+        U = getU(status.population, parameters.K, I, i, N); i+=1
         
         # generate center of mass
         c = center!(c,U)
