@@ -358,7 +358,7 @@ function Information(;#
 
 end
 
-struct Engine
+mutable struct Engine
     initialize!::Function
     update_state!::Function
     lower_level_optimizer::Function
