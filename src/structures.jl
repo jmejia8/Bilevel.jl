@@ -11,7 +11,7 @@ mutable struct xf_indiv <: AbstractSolution # Single Objective
     f::Float64
 end
 
-mutable struct xfg_indiv # Single Objective Constraied
+mutable struct xfg_indiv <: AbstractSolution # Single Objective Constraied
     x::Vector{Float64}
     y
     F::Float64
@@ -20,7 +20,7 @@ mutable struct xfg_indiv # Single Objective Constraied
     g::Vector{Float64}
 end
 
-mutable struct xfgh_indiv # Single Objective Constraied
+mutable struct xfgh_indiv <: AbstractSolution # Single Objective Constraied
     x::Vector{Float64}
     y
     F::Float64
@@ -31,7 +31,7 @@ mutable struct xfgh_indiv # Single Objective Constraied
     h::Vector{Float64}
 end
 
-mutable struct xFgh_indiv # multi Objective Constraied
+mutable struct xFgh_indiv <: AbstractSolution # multi Objective Constraied
     x::Vector{Float64}
     y
     F::Vector{Float64}
@@ -40,6 +40,10 @@ mutable struct xFgh_indiv # multi Objective Constraied
     g::Vector{Float64}
     H::Vector{Float64}
     h::Vector{Float64}
+end
+
+function Individual()
+    #function body
 end
 
 
@@ -105,7 +109,7 @@ function Options(;
     
     Options(
         # upper level parameters
-        promote(x_tol, F_tol, G_tol, H_tol)...,
+        promote(Float64(x_tol), F_tol, G_tol, H_tol)...,
         promote(F_calls_limit, G_calls_limit, H_calls_limit)...,
         
         # lower level parameters
@@ -188,44 +192,44 @@ end
 #
 #####################################################
 
-mutable struct State{T<:Int}
+mutable struct State
     best_sol
     population::Array
 
     # upper level parameters
-    F_calls::T
-    G_calls::T
-    H_calls::T
+    F_calls::Int
+    G_calls::Int
+    H_calls::Int
 
     # upper level parameters
-    f_calls::T
-    g_calls::T
-    h_calls::T
+    f_calls::Int
+    g_calls::Int
+    h_calls::Int
 
-    iteration::T
-    success_rate::Real
+    iteration::Int
+    success_rate::Float64
     convergence::Array{State}
 
 end
 
 function State(
         best_sol,
-        population::Array;
+        population;
 
         # upper level parameters
-        F_calls::Int = 0,
-        G_calls::Int = 0,
-        H_calls::Int = 0,
+        F_calls = 0,
+        G_calls = 0,
+        H_calls = 0,
 
         # upper level parameters
-        f_calls::Int = 0,
-        g_calls::Int = 0,
-        h_calls::Int = 0,
+        f_calls = 0,
+        g_calls = 0,
+        h_calls = 0,
         
-        iteration::Int = 0,
+        iteration= 0,
 
-        success_rate::Real = 0,
-        convergence::Array{State} = State[],
+        success_rate= 0,
+        convergence = State[],
     )
 
     State(#
@@ -249,8 +253,8 @@ end
 struct Problem
     F::Function
     f::Function
-    bounds_ul::Array
-    bounds_ll::Array
+    bounds_ul::Matrix{Float64}
+    bounds_ll::Matrix{Float64}
     G::Function
     g::Function
     type::Symbol
@@ -274,7 +278,7 @@ function Problem(F::Function,
         type = :constrained_ul
     end
     
-    Problem(F, f, bounds_ul, bounds_ll, G, g, type)
+    Problem(F, f, Matrix{Float64}(bounds_ul), Matrix{Float64}(bounds_ll), G, g, type)
 end
 
 #####################################################
@@ -287,11 +291,11 @@ struct QBCA
     # QBCA Options
     k::Int
     N::Int
-    η_ul_max::Real
-    η_ll_max::Real
-    α::Real
-    β::Real
-    s_min::Real
+    η_ul_max::Float64
+    η_ll_max::Float64
+    α::Float64
+    β::Float64
+    s_min::Float64
 
     options::Options
 
@@ -336,11 +340,11 @@ function QBCA(D_ul;
 end
 
 struct Information
-    F_optimum::Real
-    f_optimum::Real
+    F_optimum::Float64
+    f_optimum::Float64
 
-    x_optimum::Array{Real}
-    y_optimum::Array{Real}
+    x_optimum::Array{Float64}
+    y_optimum::Array{Float64}
 end
 
 function Information(;#
@@ -350,7 +354,7 @@ function Information(;#
     y_optimum::Array{Real} = Real[],
     )
 
-    Information(promote(F_optimum,f_optimum)..., x_optimum, y_optimum)
+    Information(promote(Float64(F_optimum),f_optimum)..., x_optimum, y_optimum)
 
 end
 
