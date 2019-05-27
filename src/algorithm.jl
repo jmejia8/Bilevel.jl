@@ -18,6 +18,15 @@ function optimize(F_ul::Function, # upper level objective function
       update_state! = engine.update_state!
       final_stage!  = engine.final_stage!
       ###################################
+
+      ###################################
+      # store convergence
+      ###################################
+      if options.store_convergence
+            st = deepcopy(status)
+            empty!(st.convergence)
+            push!(status.convergence, st)
+      end
       
       status.iteration = 0
       while !engine.stop_criteria(status, information, options)
