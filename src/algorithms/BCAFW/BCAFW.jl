@@ -22,25 +22,34 @@ function initialize!(problem,engine,parameters,status,information,options)
 
     # population array
     population = []
-
+    best = nothing
     for i in 1:parameters.N
         x = X[i,:]
         ll_result = engine.lower_level_optimizer(x, p, status, information, options, 0)
 
         y = ll_result.y
 
-        child = generateChild(x, y, p.F(x, y), p.f(x, y))
+        child = generateChild(x, y, p.F(x, y), ll_result.f)
         push!(population, child)
 
         status.f_calls += ll_result.f_calls
         status.F_calls += 1
+
+        if best == nothing || engine.is_better(child, best)
+            best = child
+        end
+
+        if options.debug
+            display(child)
+            println("------------------------------")
+        end
     end
 
     individual = typeof(population[1])
     population = Array{individual, 1}(population)
 
     status.population = population
-    status.best_sol = population[1]
+    status.best_sol = best
 end
 
 function update_state!(problem,engine,parameters,status,information,options,t)
@@ -77,7 +86,7 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         ########################################################################
         # Nested optimization solution
         ########################################################################
-        ll_result = engine.lower_level_optimizer(p,problem,status,information,options,0)
+        ll_result = engine.lower_level_optimizer(p,problem,status,information,options,t)
         status.f_calls += ll_result.f_calls
         q = ll_result.y
         ########################################################################
