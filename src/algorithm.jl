@@ -8,7 +8,7 @@ function optimize(F_ul::Function, # upper level objective function
       problem = Problem(F_ul,f_ll,bounds_ul,bounds_ll)
       engine = method.engine
 
-      method.options.debug && println("Initializing population...")
+      method.options.debug && @info("Initializing population...")
       engine.initialize!(problem, engine, method.parameters, method.status, method.information, method.options)
 
       #####################################
@@ -30,7 +30,9 @@ function optimize(F_ul::Function, # upper level objective function
             push!(status.convergence, st)
       end
       
-      method.options.debug && println("Starting main loop...")
+      method.options.debug && @info("Starting main loop...")
+      options.debug && display(status)
+
 
       status.iteration = 0
       while !engine.stop_criteria(status, information, options)

@@ -18,6 +18,7 @@ function display(status::State)
     end
 
     println("+=========== STATE ==========+")
+    @printf("| Iter.: %.0f\n", status.iteration)
     display(status.best_sol)
     
 
@@ -26,8 +27,6 @@ function display(status::State)
 
     # upper level parameters
     @printf("| LL FEs: %.0f\n", status.f_calls)
-
-    @printf("| Iters.: %.0f\n", status.iteration)
     println("+============================+")
 end
 

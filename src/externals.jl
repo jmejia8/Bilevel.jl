@@ -4,4 +4,3 @@ import LinearAlgebra: norm
 import Printf.@printf
 import Metaheuristics
 import Statistics: mean, var
-# import Calculus
