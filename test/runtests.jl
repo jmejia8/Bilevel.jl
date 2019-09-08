@@ -32,7 +32,11 @@ function test3()
 
     options = Options(F_calls_limit=1000,
                         f_calls_limit=Int(1e6),
+                        f_tol = 1e-5,
+                        F_tol = 1e-5,
                         debug=false,store_convergence=false)
+
+    information = Information(F_optimum = 0.0, f_optimum = 0.0)
 
     BCA = BCAOperators.BCAFW(N =30)
 
@@ -42,7 +46,9 @@ function test3()
                         lower_level_optimizer = BCAOperators.lower_level_optimizer,
                         is_better = BCAOperators.is_better,
                         stop_criteria = BCAOperators.stop_criteria,
-                        options = options)
+                        options = options,
+                        information = information,
+                        )
 
     r = optimize((x,y) -> sum((x + y).^2),
                 (x,y) -> sum((sin.(4π*x) - y).^2),
@@ -50,6 +56,7 @@ function test3()
                 [-1 -1; 1 1.0],
                 method
         )
+
 
     true
 end
