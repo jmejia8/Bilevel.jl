@@ -9,6 +9,7 @@ function optimize(F_ul::Function, # upper level objective function
       engine = method.engine
 
       method.options.debug && @info("Initializing population...")
+      method.status.initial_time = time()
       engine.initialize!(problem, engine, method.parameters, method.status, method.information, method.options)
 
       #####################################
@@ -24,10 +25,10 @@ function optimize(F_ul::Function, # upper level objective function
       ###################################
       # store convergence
       ###################################
+      convergence = State[]
       if options.store_convergence
             st = deepcopy(status)
-            empty!(st.convergence)
-            push!(status.convergence, st)
+            push!(convergence, st)
       end
       
       method.options.debug && @info("Starting main loop...")
@@ -35,7 +36,8 @@ function optimize(F_ul::Function, # upper level objective function
 
 
       status.iteration = 0
-      while !engine.stop_criteria(status, information, options)
+      status.stop = engine.stop_criteria(status, information, options)
+      while !status.stop
             status.iteration += 1
 
             update_state!(problem,engine,method.parameters,method.status,method.information,method.options,status.iteration)
@@ -45,13 +47,17 @@ function optimize(F_ul::Function, # upper level objective function
 
             if options.store_convergence
                   st = deepcopy(status)
-                  empty!(st.convergence)
-                  push!(status.convergence, st)
+                  push!(convergence, st)
             end
             
+            status.stop = status.stop || engine.stop_criteria(status, information, options)
+      
       end
 
+      status.convergence = convergence
+
       final_stage!(status, information, options)
+      method.status.final_time = time()
 
       return status
 

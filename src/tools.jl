@@ -40,21 +40,27 @@ function init_population(F::Function, f::Function, N::Int, bounds_ul::Matrix, bo
     for i in 2:N
         x = X[i,:]
 
-        y, fy = Metaheuristics.eca( z-> f(x, z), D_ll;
-                                        limits=bounds_ll,
-                                        K = 3, N = 3D_ll,
-                                        showResults=false,
-                                        p_bin = 0,
-                                        p_exploit = 2,
-                                        canResizePop=false, 
-                                        max_evals=1000D_ll)
+        opt = Metaheuristics.Options(f_calls_limit = 1000D_ll, )
+        eca = Metaheuristics.ECA(;K = 3, N = 3D_ll, p_bin = 0.0, p_exploit = 2.0, options = opt)
+        res = Metaheuristics.optimize(z -> f(x, z), bounds_ll, eca)
+
+        # y, fy = Metaheuristics.eca( z-> f(x, z), D_ll;
+        #                                 limits=bounds_ll,
+        #                                 K = 3, N = 3D_ll,
+        #                                 showResults=false,
+        #                                 p_bin = 0,
+        #                                 p_exploit = 2,
+        #                                 canResizePop=false, 
+        #                                 max_evals=1000D_ll)
+        y = res.best_sol.x
+        fy = res.best_sol.f
         
         y = correct(y, bounds_ll)
 
         r = Optim.optimize( z -> f(x, z), bounds_ll[1,:], bounds_ll[2,:], y, Optim.Fminbox(Optim.BFGS()))
         y = r.minimizer
     
-        nevals_ll += 1000D_ll + r.f_calls + 1
+        nevals_ll += res.f_calls + r.f_calls + 1
 
         child = generateChild(x, y, F(x, y), f(x, y))
         push!(population, child)

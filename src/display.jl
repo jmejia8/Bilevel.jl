@@ -27,6 +27,8 @@ function display(status::State)
 
     # upper level parameters
     @printf("| LL FEs: %.0f\n", status.f_calls)
+    @printf("|   Time: %0.4f secs.\n", status.final_time - status.initial_time)
+    println("|   Stop: ", status.stop_msg)
     println("+============================+")
 end
 

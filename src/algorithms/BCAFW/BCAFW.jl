@@ -105,6 +105,8 @@ function update_state!(problem,engine,parameters,status,information,options,t)
             end
         end
 
+        status.stop = engine.stop_criteria(status, information, options)
+        status.stop && break
         
         ########################################################################
         fill!(c, 0.0)
@@ -113,15 +115,14 @@ end
 
 function lower_level_optimizer(x,problem,status,information,options,t)
     D = size(problem.bounds_ll, 2)
-    y, fy = Metaheuristics.eca( z -> problem.f(x, z), D;
-                                limits=problem.bounds_ll,
-                                K = 3, N = 3D,
-                                showResults=false,
-                                p_bin = 0,
-                                p_exploit = 2,
-                                canResizePop=false, 
-                                max_evals=1000D)
-    return LLResult(y, fy; f_calls = 1000D)
+
+    opt = Metaheuristics.Options(f_calls_limit = min(1000D, options.f_calls_limit - status.f_calls) )
+    eca = Metaheuristics.ECA(;K = 3, N = 3D, p_bin = 0.0, p_exploit = 2.0, options = opt)
+    res = Metaheuristics.optimize(z -> problem.f(x, z), problem.bounds_ll, eca)
+
+    y = res.best_sol.x
+    fy = res.best_sol.f
+    return LLResult(y, fy; f_calls = res.f_calls)
 end
 
 function is_better(solution_1, solution_2) # solution_1 is better that solution_2 

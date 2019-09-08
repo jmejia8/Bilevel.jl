@@ -209,6 +209,10 @@ mutable struct State
     iteration::Int
     success_rate::Float64
     convergence::Array{State}
+    initial_time::Float64
+    final_time::Float64
+    stop::Bool
+    stop_msg::String
 
 end
 
@@ -246,7 +250,12 @@ function State(
             h_calls,
             iteration)...,
             Real(success_rate),
-            State[])
+            State[],
+            0.0,
+            0.0,
+            false,
+            ""
+            )
     
 end
 
