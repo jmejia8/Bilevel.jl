@@ -26,6 +26,7 @@ function ll_accuracy_stop_check(status::State, information::Information, options
     cond = information.f_optimum != NaN && abs(status.best_sol.f - information.f_optimum) < options.f_tol
     status.stop = cond
     status.stop_msg = "ll_accuracy"
+    cond
 end
 
 function ul_varF_stop_check(status::State, information::Information, options::Options)
