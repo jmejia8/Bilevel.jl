@@ -106,7 +106,9 @@ function update_state!(problem,engine,parameters,status,information,options,t)
         end
 
         status.stop = engine.stop_criteria(status, information, options)
-        status.stop && break
+        if status.stop 
+            return
+        end
         
         ########################################################################
         fill!(c, 0.0)
