@@ -36,7 +36,7 @@ function optimize(F_ul::Function, # upper level objective function
 
 
       status.iteration = 0
-      status.stop = engine.stop_criteria(status, information, options)
+      status.stop = status.stop || engine.stop_criteria(status, information, options)
       while !status.stop
             status.iteration += 1
 
