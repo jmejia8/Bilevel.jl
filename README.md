@@ -4,9 +4,25 @@ Some methods for Bilevel Optimization for Julia 1.x will be shared here.
 
 ## Installation
 
-### Julia 0.7 or Later
 
-Open the Julia REPL and press `]` to open the Pkg prompt. To add this package, use the add command:
+### Julia 1.0 or Later
+
+First install the **dependencies**: Open the Julia REPL and press `]` to open the Pkg prompt. To add this package, use the add command:
+
+Metaheuristic package:
+```
+pkg> add https://github.com/jmejia8/Metaheuristics.jl.git
+```
+
+
+BiApprox package:
+```
+pkg> add https://github.com/jmejia8/BiApprox.git
+```
+
+
+
+Now, you are able to install Bilevel.jl:
 ```
 pkg> add https://github.com/jmejia8/Bilevel.jl.git
 ```
