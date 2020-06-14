@@ -1,9 +1,10 @@
 name = "Bilevel"
 uuid = "345d3ba6-d16c-11e8-3a43-33eb7bceec82"
 authors = ["Jesus Mejia <jesusmejded@gmail.com>"]
-version = "0.2.9"
+version = "0.3.0"
 
 [deps]
+BiApprox = "6b23c94a-2afc-11e9-1d49-5131b50f74df"
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Metaheuristics = "bcdb8e00-2c21-11e9-3065-2b553b22f898"

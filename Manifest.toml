@@ -9,6 +9,14 @@ version = "1.2.1"
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
+[[BiApprox]]
+deps = ["LinearAlgebra", "MLKernels", "Random", "Statistics", "Test"]
+git-tree-sha1 = "ca6dca8448b27e345be42141c9ac3a830f2c4768"
+repo-rev = "master"
+repo-url = "https://github.com/jmejia8/BiApprox.git"
+uuid = "6b23c94a-2afc-11e9-1d49-5131b50f74df"
+version = "0.3.1"
+
 [[BinDeps]]
 deps = ["Compat", "Libdl", "SHA", "URIParser"]
 git-tree-sha1 = "12093ca6cdd0ee547c39b1870e0c9c3f154d9ca9"
@@ -97,6 +105,7 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[LibGit2]]
+deps = ["Printf"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libdl]]
@@ -114,6 +123,12 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
+
+[[MLKernels]]
+deps = ["LinearAlgebra", "SpecialFunctions", "Statistics", "Test"]
+git-tree-sha1 = "d8ae6ac28480a25ddaae9ad9108371035ef9a346"
+uuid = "6899632a-1081-549c-8d71-752c8a25a7ba"
+version = "0.4.0"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -167,7 +182,7 @@ uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 version = "0.12.0"
 
 [[Pkg]]
-deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
+deps = ["Dates", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PositiveFactorizations]]
