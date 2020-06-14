@@ -1,66 +1,99 @@
 using Bilevel
 using Test
 
-F(x, y) = sum(x.^2 + 0.1cos.(4π*x) + y.^2 + 0.1sin.(4π*y))
-f(x, y) = sum((x.^2 + y.^2 .- 1.0).^2)
+F(x, y) = sum(x .^ 2 + 0.1 * cos.(4π * x) + y .^ 2 + 0.1 * sin.(4π * y))
+f(x, y) = sum((x .^ 2 + y .^ 2 .- 1.0) .^ 2)
 
 function test1()
 
-    bounds = Matrix([-1.0  1.0]')
+    bounds = Matrix([-1.0 1.0]')
 
-    method = QBCA(size(bounds, 2); s_min=-1, N=20, F_calls_limit = 10000)
+    method = QBCA(size(bounds, 2); s_min = -1, N = 20, F_calls_limit = 10000)
 
-    result = optimize(F, f, bounds,bounds, method)
+    result = optimize(F, f, bounds, bounds, method)
 
     best = result.best_sol
 
-    ≈(best.F, 0.8, atol= 1e-1) && ≈(best.f, 0.0, atol=1e-5) 
+    ≈(best.F, 0.8, atol = 1e-1) && ≈(best.f, 0.0, atol = 1e-5)
 end
 
 function test2()
-    bounds = Matrix([-1.0  1.0]')
+    bounds = Matrix([-1.0 1.0]')
 
-    method = QBCA(size(bounds, 2); s_min=-1, N=20, F_calls_limit = 10000, ll_iterations = 10, options = Bilevel.Options(store_convergence = true))
+    method = QBCA(
+        size(bounds, 2);
+        s_min = -1,
+        N = 20,
+        F_calls_limit = 10000,
+        ll_iterations = 10,
+        options = Bilevel.Options(store_convergence = true),
+    )
 
-    result = optimize(F, f, bounds,bounds, method)
+    result = optimize(F, f, bounds, bounds, method)
 
     best = result.best_sol
-    ≈(best.F, 0.8, atol= 1e-1) && ≈(best.f, 0.0, atol=1e-5) && length(result.convergence) > 0
+    ≈(best.F, 0.8, atol = 1e-1) &&
+        ≈(best.f, 0.0, atol = 1e-5) &&
+        length(result.convergence) > 0
 end
 
 function test3()
 
-    options = Options(F_calls_limit=1000,
-                        f_calls_limit=Int(1e6),
-                        f_tol = 1e-5,
-                        F_tol = 1e-5,
-                        debug=false,store_convergence=false)
+    options = Options(
+        F_calls_limit = 1000,
+        f_calls_limit = Int(1e6),
+        f_tol = 1e-5,
+        F_tol = 1e-5,
+        debug = false,
+        store_convergence = false,
+    )
 
     information = Information(F_optimum = 0.0, f_optimum = 0.0)
 
-    BCA = BCAOperators.BCAFW(N =30)
+    BCA = BCAOperators.BCAFW(N = 30)
 
-    method = Algorithm(BCA;
-                        initialize! = BCAOperators.initialize!,
-                        update_state! = BCAOperators.update_state!,
-                        lower_level_optimizer = BCAOperators.lower_level_optimizer,
-                        is_better = BCAOperators.is_better,
-                        stop_criteria = BCAOperators.stop_criteria,
-                        options = options,
-                        information = information,
-                        )
+    method = Algorithm(
+        BCA;
+        initialize! = BCAOperators.initialize!,
+        update_state! = BCAOperators.update_state!,
+        lower_level_optimizer = BCAOperators.lower_level_optimizer,
+        is_better = BCAOperators.is_better,
+        stop_criteria = BCAOperators.stop_criteria,
+        options = options,
+        information = information,
+    )
 
-    r = optimize((x,y) -> sum((x + y).^2),
-                (x,y) -> sum((sin.(4π*x) - y).^2),
-                [-1 -1; 1 1.0],
-                [-1 -1; 1 1.0],
-                method
-        )
-
+    r = optimize(
+        (x, y) -> sum((x + y) .^ 2),
+        (x, y) -> sum((sin.(4π * x) - y) .^ 2),
+        [-1 -1; 1 1.0],
+        [-1 -1; 1 1.0],
+        method,
+    )
 
     true
+end
+
+function testSABO()
+    D = 3
+    bounds = Array([-1 * ones(D) 1 * ones(D)]')
+
+    information = Information(F_optimum = 0.0, f_optimum = 0.0)
+
+    method = SABO(D; information = information)
+    r = optimize(
+        (x, y) -> sum((x + y) .^ 2),
+        (x, y) -> sum((sin.(4π * x) - y) .^ 2),
+        bounds,
+        bounds,
+        method
+    )
+
+    r.best_sol.F < 1e-2 && r.best_sol.f < 1e-3
+
 end
 
 @test test1()
 @test test2()
 @test test3()
+@test testSABO()
