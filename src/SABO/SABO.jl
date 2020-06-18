@@ -190,7 +190,7 @@ function update_state_SABO!(
     y = map(sol -> sol.F, status.population)
     X = vcat(X...)
     X = (X .- a') ./ (b - a)'
-    method = KernelInterpolation(y, X, λ = 1e-5)
+    method = KernelInterpolation(y, X, λ = parameters.λ)
     train!(method)
     F̂ = approximate(method)
 
@@ -321,7 +321,10 @@ function final_stage_SABO!(status, information, options) end
 
 
 mutable struct SABO
-    algorithm::Algorithm
+    N::Int64
+    K::Int64
+    η_max::Float64
+    λ::Float64
 end
 
 function SABO(
@@ -329,6 +332,7 @@ function SABO(
     K = 3,
     N = K * D,
     η_max = 1.2,
+    λ = 1e-5,
     F_calls_limit = 350D,
     f_calls_limit = Inf,
     iterations = 1 + round(F_calls_limit / N),
@@ -351,10 +355,10 @@ function SABO(
     #     information = Information(F_optimum = 0.0, f_optimum = 0.0)
     # end
 
-    BCA = BCAOperators.BCAFW(K = K, N = N, η_max = η_max)
+    sabo = SABO(N, K, η_max, λ)
 
     algorithm = Algorithm(
-        BCA;
+        sabo;
         initialize! = initialize_SABO!,
         update_state! = update_state_SABO!,
         lower_level_optimizer = lower_level_optimizer_SABO,
@@ -367,12 +371,12 @@ function SABO(
 
 
 
-    SABO(algorithm)
+    algorithm
 
 end
 
 optimize(F, f, bounds_ul, bounds_ll, method::SABO) =
-    optimize(F, f, bounds_ul, bounds_ll, method.algorithm)
+    optimize(F, f, bounds_ul, bounds_ll, method)
 
 
 # function BCA3(D; K = 3, N = K*D, η_max = 1.2, F_calls_limit = 350D, store_convergence=true)
