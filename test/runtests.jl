@@ -8,10 +8,10 @@ function test1()
 
     bounds = Matrix([-1.0 1.0]')
 
-    method = QBCA(size(bounds, 2); s_min = -1, N = 20, F_calls_limit = 10000)
+    method = QBCA(size(bounds, 2); s_min = -1, N = 20)
+    method.options.F_calls_limit = 10000
 
     result = optimize(F, f, bounds, bounds, method)
-
     best = result.best_sol
 
     ≈(best.F, 0.8, atol = 1e-1) && ≈(best.f, 0.0, atol = 1e-5)
@@ -24,12 +24,14 @@ function test2()
         size(bounds, 2);
         s_min = -1,
         N = 20,
-        F_calls_limit = 10000,
-        ll_iterations = 10,
-        options = Bilevel.Options(store_convergence = true),
+        # ll_iterations = 10
     )
 
+    method.options.F_calls_limit = 10000
+    method.options.f_calls_limit = 50000
+
     result = optimize(F, f, bounds, bounds, method)
+    display(result)
 
     best = result.best_sol
     ≈(best.F, 0.8, atol = 1e-1) &&

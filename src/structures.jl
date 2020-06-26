@@ -62,7 +62,7 @@ mutable struct Options
     F_calls_limit::Float64
     G_calls_limit::Float64
     H_calls_limit::Float64
-    
+
     # lower level parameters
     y_tol::Float64
     f_tol::Float64
@@ -71,7 +71,7 @@ mutable struct Options
     f_calls_limit::Float64
     g_calls_limit::Float64
     h_calls_limit::Float64
-    
+
     iterations::Int
     ll_iterations::Int
     store_convergence::Bool
@@ -89,7 +89,7 @@ function Options(;
     F_calls_limit::Real = 0,
     G_calls_limit::Real = 0,
     H_calls_limit::Real = 0,
-    
+
     # lower level parameters
     y_tol::Real = 0.0,
     f_tol::Real = 0.0,
@@ -98,7 +98,7 @@ function Options(;
     f_calls_limit::Real = 0,
     g_calls_limit::Real = 0,
     h_calls_limit::Real = 0,
-    
+
     iterations::Int = 1000,
     ll_iterations::Int = 1000,
     store_convergence::Bool = false,
@@ -106,23 +106,23 @@ function Options(;
     debug::Bool = false,
     search_type::Symbol=:minimize)
 
-    
+
     Options(
         # upper level parameters
         promote(Float64(x_tol), F_tol, G_tol, H_tol)...,
         promote(F_calls_limit, G_calls_limit, H_calls_limit)...,
-        
+
         # lower level parameters
         promote(y_tol, f_tol, g_tol, h_tol)...,
         promote(f_calls_limit, g_calls_limit, h_calls_limit)...,
-        
+
         promote(iterations,ll_iterations)...,
 
         # Results options
         promote(store_convergence,show_results, debug)...,
         Symbol(search_type)
     )
-    
+
 end
 
 #####################################################
@@ -140,7 +140,7 @@ mutable struct Results
     F_calls::Int
     G_calls::Int
     H_calls::Int
-    
+
     # lower level parameters
     Δy::Float64
     Δf::Float64
@@ -149,7 +149,7 @@ mutable struct Results
     f_calls::Int
     g_calls::Int
     h_calls::Int
-    
+
     iterations::Int
     best_sol
     # convergence::
@@ -166,7 +166,7 @@ mutable struct LLResult
     f_calls::Int
     g_calls::Int
     h_calls::Int
-    
+
     iterations::Int
     other
 end
@@ -229,7 +229,7 @@ function State(
         f_calls = 0,
         g_calls = 0,
         h_calls = 0,
-        
+
         iteration= 0,
 
         success_rate= 0,
@@ -239,7 +239,7 @@ function State(
     State(#
         best_sol,
         Array(population),
-        
+
         # upper level parameters
         promote(
             F_calls,
@@ -256,7 +256,7 @@ function State(
             false,
             ""
             )
-    
+
 end
 
 struct Problem
@@ -276,7 +276,7 @@ function Problem(F::Function,
                 G::Function = _1_(x,y) = 0,
                 g::Function = _2_(x,y) = 0)
 
-    
+
     type::Symbol = :constrained
 
     if nameof(G) == :_1_ && nameof(G) == :_2_
@@ -286,7 +286,7 @@ function Problem(F::Function,
     elseif nameof(G) == :_2_
         type = :constrained_ul
     end
-    
+
     Problem(F, f, Matrix{Float64}(bounds_ul), Matrix{Float64}(bounds_ll), G, g, type)
 end
 
@@ -295,58 +295,6 @@ end
 #         STRUCTURES FOR THE ALGORITHMS
 #
 #####################################################
-
-struct QBCA
-    # QBCA Options
-    k::Int
-    N::Int
-    η_ul_max::Float64
-    η_ll_max::Float64
-    α::Float64
-    β::Float64
-    s_min::Float64
-
-    options::Options
-
-end
-
-function QBCA(D_ul;
-        # QBCA parameters
-        k::Int = 3,
-        N::Int = 2k * D_ul,
-        η_ul_max::Real = 2.0,
-        η_ll_max::Real = 1.0 / η_ul_max,
-        s_min::Real = 0.01,
-        α::Real = 0.05,
-        β::Real = 0.05,
-
-
-        # general Options
-        iterations::Int  = 500D_ul,
-        # lower level options
-        ll_iterations::Int = 1000,
-        
-        F_calls_limit::Real = 1000D_ul,
-        f_calls_limit::Real = Inf,
-
-        options::Options = Options(),
-
-    )
-
-   
-    options.iterations = iterations
-    options.ll_iterations = ll_iterations
-    options.F_calls_limit = F_calls_limit
-    options.f_calls_limit = f_calls_limit
-
-    QBCA(#
-        # general Options
-        promote(k, N)...,
-        promote(η_ul_max,η_ll_max,α, β, s_min)...,
-        options
-    )
-
-end
 
 struct Information
     F_optimum::Float64
@@ -379,10 +327,10 @@ end
 function Engine(;initialize!::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
-                       is_better::Function = _4(kwargs...) = false, 
+                       is_better::Function = _4(kwargs...) = false,
                    stop_criteria::Function = _5(kwargs...) = nothing,
                     final_stage!::Function = _6(kwargs...) = nothing)
-    
+
     Engine(initialize!,update_state!,lower_level_optimizer,
            is_better,stop_criteria,final_stage!)
 end
@@ -400,13 +348,13 @@ function Algorithm(   parameters;
                       initialize!::Function = _1(kwargs...) = nothing,
                    update_state!::Function = _2(kwargs...) = nothing,
            lower_level_optimizer::Function = _3(kwargs...) = nothing,
-                       # is_better(a, b)  = true if x is better that y 
+                       # is_better(a, b)  = true if x is better that y
                        is_better::Function = _5(kwargs...) = false,
                    stop_criteria::Function = stop_check,
                     final_stage!::Function = _4(kwargs...) = nothing,
                      information::Information = Information(),
                          options::Options  = Options())
-    
+
 
     engine = Engine(initialize!,
                 update_state!,
