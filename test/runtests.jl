@@ -29,9 +29,9 @@ function test2()
 
     method.options.F_calls_limit = 10000
     method.options.f_calls_limit = 50000
+    method.options.store_convergence = true
 
     result = optimize(F, f, bounds, bounds, method)
-    display(result)
 
     best = result.best_sol
     ≈(best.F, 0.8, atol = 1e-1) &&
@@ -49,6 +49,7 @@ function test3()
         debug = false,
         store_convergence = false,
     )
+
 
     information = Information(F_optimum = 0.0, f_optimum = 0.0)
 
@@ -72,6 +73,8 @@ function test3()
         [-1 -1; 1 1.0],
         method,
     )
+
+
 
     true
 end

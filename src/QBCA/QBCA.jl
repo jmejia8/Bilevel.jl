@@ -158,16 +158,17 @@ function update_state_QBCA!(
         # current-to-center
         p = x + η_ul * (c_ul - u)
         p = correct(p, problem.bounds_ul)
-
+        pp = (p, c_ll, v)
         # ------------------------------------------- -- ---
-        ll = engine.lower_level_optimizer(p, problem, status, information, options, t_main_loop)
+        ll = engine.lower_level_optimizer(pp, problem, status, information, options, t_main_loop, parameters)
         q = ll.y
+        fpq = ll.f
         status.f_calls += ll.f_calls
         # ------------------------------------------- -- ---
 
         # q = correct(q, bounds_ll)
 
-        sol = generateChild(p, q, F(p, q), fpq)
+        sol = generateChild(p, q, problem.F(p, q), fpq)
         status.F_calls += 1
 
         if sol ≺ status.population[i]
@@ -176,9 +177,6 @@ function update_state_QBCA!(
 
             if sol ≺ status.best_sol
                 status.best_sol = sol
-
-                options.store_convergence &&
-                    push!(convergence, deepcopy(status))
 
                 # check stop condition
                 stop = stop_check(status, information, options)
@@ -202,17 +200,20 @@ function update_state_QBCA!(
 end
 
 
-function lower_level_optimizer_QBCA(p, problem, status, information, options, t)
+function lower_level_optimizer_QBCA(pp, problem, status, information, options, t, parameters = nothing)
     tol = 1e-16
-    y0, d = nearest(status.population, p; tol = 1e-16)
-    η_ll = η_ll_max * rand()
+    p, c_ll, v = pp
 
+    y0, d = nearest(status.population, p; tol = 1e-16)
+    η_ll = parameters.η_ll_max * rand()
+
+    f_calls = 0.0
     if d >= tol
 
         vv = (c_ll - v)
         # current-to-center
         y1 = y0 + (η_ll / norm(vv)) * vv
-        y1 = correct(y1, bounds_ll)
+        y1 = correct(y1, problem.bounds_ll)
 
         # approx
         r = Optim.optimize(
