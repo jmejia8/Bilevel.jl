@@ -1,7 +1,7 @@
 module Bilevel
 
 export Algorithm, Information, State, Options, xf_indiv, Problem
-export BCAOperators
+export BCAOperators, generateChild, xFgh_indiv
 export optimize, QBCA, SABO
 
 include("types.jl")

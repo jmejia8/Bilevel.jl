@@ -1,5 +1,8 @@
 using Bilevel
 using Test
+import Random: seed!
+
+seed!(1)
 
 F(x, y) = sum(x .^ 2 + 0.1 * cos.(4π * x) + y .^ 2 + 0.1 * sin.(4π * y))
 f(x, y) = sum((x .^ 2 + y .^ 2 .- 1.0) .^ 2)
@@ -98,7 +101,20 @@ function testSABO()
 
 end
 
+function test_mo()
+    FF(x, y) = ( [x[1], x[2]], [ sum(x - y), sum(y) ], [prod(x + y), sum(x)] )
+    ff(x, y) = ( [x[1]-y[1], x[2] - y[1]], [ sum(x - y) ], [prod(x + y)] )
+
+    x = rand(2)
+    y = rand(2)
+
+    sol = generateChild(x, y, FF(x, y), ff(x, y))
+    true
+end
+
+
 @test test1()
 @test test2()
 @test test3()
 @test testSABO()
+@test test_mo()
