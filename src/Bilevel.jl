@@ -19,6 +19,7 @@ include("optimize.jl")
 include("algorithms/BCAFW/BCAFW.jl")
 include("algorithms/SABO/SABO.jl")
 include("algorithms/QBCA/QBCA.jl")
+include("algorithms/EMBO_MF/EMBO_MF.jl")
 
 
 include("display.jl")

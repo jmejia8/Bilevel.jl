@@ -1,42 +1,71 @@
+include("lower-level.jl")
 mutable struct MBO
-    K_ul::Int
-    K_ll::Int
-    N::Int
-    η_max_ul::Float64
-    η_max_ll::Float64
-    λ_ul::Array{Array{Float64}}
-    λ_ll::Array{Array{Float64}}
-    w::Vector{Float64}
-    z::Vector{Float64}
-    B_ul::Array{Array{Int}}
-    B_ll::Array{Array{Int}}
-    T_ul::Int
-    T_ll::Int
+    upper_level_parameters
+    lower_level_parameters
+    n_followers::Int
     Ψ::Function
-    G_te::Vector{Float64}
 end
 
 
-function update_neighbors_ul!(parameters)
-    N = length(parameters.λ_ul)
-    d = zeros(N, N)
+function MBO(;
+        upper_level_parameters = nothing,
+        lower_level_parameters = nothing,
+        Ψ = x -> x,
+        n_followers = 1,
+        options = Options(),
+        information = Information()
+)
 
-    empty!(parameters.B_ul)
 
-    for i in 1:N
-        for j in (i+1):N
-            d[i, j] = norm(parameters.λ_ul[i] - parameters.λ_ul[j])
-            d[j, i] = d[i, j]
+
+    parameters = MBO(upper_level_parameters, lower_level_parameters, n_followers, Ψ)
+
+    algorithm = Bilevel.Algorithm(
+        parameters;
+        initialize! = initialize_MBO!,
+        update_state! = update_state_MBO!,
+        lower_level_optimizer = lower_level_optimizer_MBO,
+        is_better = is_better_MBO,
+        stop_criteria = stop_criteria_MBO,
+        final_stage! = final_stage_MBO!,
+        options = options,
+        information = information,
+    )
+
+
+
+    algorithm
+end
+
+function ll_decision_maker(F, x, Y)
+    n_followers = length(Y)
+    Fx = []
+    for i in 1:n_followers
+        no_dominated = Y[i]
+        for j in 1:length(no_dominated)
+            F(x,)
         end
-
-        I = sortperm(d[i,:])
-        push!(parameters.B_ul, I[2:(parameters.T_ul+1)])
     end
-
-    parameters.B_ul
 end
 
 function initialize_MBO!(problem, engine, parameters, status, information, options)
+
+    D_ul = size(problem.bounds_ul, 2)
+    N = parameters.upper_level_parameters.parameters.N
+    a = problem.bounds_ul[1,:]
+    b = problem.bounds_ul[2,:]
+    X = [ a + (b - a).*rand(D_ul) for i in 1:N ] 
+
+    for x in X
+        options.debug && @show x
+        Y = lower_level_optimizer_MBO(x, problem, status, information, options, 0;
+                                        parameters.lower_level_parameters,
+                                        parameters.n_followers )
+
+        ll_decision_maker(problem.F, x, Y)
+    end
+
+    status.stop = true
   
     status.final_time = time()
 end
@@ -93,84 +122,6 @@ end
 function final_stage_MBO!(status, information, options)
     status.final_time = time()
 
-    # compute Pareto front if it is a multiobjective problem
-    if typeof(status.population[1].F) <: Array && isempty(status.best_sol)
-        options.debug && @info "Computing Pareto front..."
-        status.best_sol = Metaheuristics.get_pareto_front(status.population, is_better_MBO)
-    end
 end
 
 
-
-
-function MBO(;
-    K_ul = 3,
-    K_ll = 3,
-    N = 0,
-    η_max_ul = 1.5,
-    η_max_ll = 1.5,
-    λ_ul = zeros(0),
-    λ_ll = zeros(0),
-    w = zeros(0),
-    z = zeros(0),
-    B_ul = [Int[]],
-    B_ll = [Int[]],
-    T_ul = 10,
-    T_ll = 10,
-    Ψ = identity,
-    G_te = zeros(0),
-    F_calls_limit = 1000,
-    f_calls_limit = Inf,
-    iterations = 1000,
-    options = nothing,
-    information = Information(),
-)
-
-    if isnothing(options)
-        options = Bilevel.Options(
-            F_calls_limit = F_calls_limit,
-            f_calls_limit = Inf,
-            debug = false,
-            iterations = iterations,
-            store_convergence = false,
-        )
-    end
-
-
-
-    parameters = MBO(K_ul,
-                    K_ll,
-                    N,
-                    η_max_ul,
-                    η_max_ll,
-                    λ_ul,
-                    λ_ll,
-                    w,
-                    z,
-                    B_ul,
-                    B_ll,
-                    T_ul,
-                    T_ll,
-                    Ψ,
-                    G_te
-                )
-
-    algorithm = Bilevel.Algorithm(
-        parameters;
-        initialize! = initialize_MBO!,
-        update_state! = update_state_MBO!,
-        lower_level_optimizer = lower_level_optimizer_MBO,
-        is_better = is_better_MBO,
-        stop_criteria = stop_criteria_MBO,
-        final_stage! = final_stage_MBO!,
-        options = options,
-        information = information,
-    )
-
-
-
-    algorithm
-end
-
-
-export MBO, optimize
