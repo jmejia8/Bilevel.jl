@@ -18,7 +18,7 @@ function lower_level_optimizer_MBO(x, problem, status, information, options, t; 
         res = Metaheuristics.optimize( y -> problem.f(x, y, i), problem.bounds_ll, parameters)
         options.debug && display(res)
         f_calls += res.f_calls
-        push!(Y, res.best_sol )
+        push!(Y, res )
     end
 
         

@@ -37,11 +37,30 @@ function MBO(;
     algorithm
 end
 
+function ll_decision_based_on_nadir(F, x, followers_result)
+    n_followers = length(followers_result)
+    Y = []
+    for i in 1:n_followers
+        pareto_front = Metaheuristics.pareto_front(followers_result[i]) 
+
+        # get the ideal
+        z = fill(Inf, length(pareto_front[1].f))
+        Metaheuristics.update_reference_point!(z, pareto_front)
+
+        j = argmin( [ norm( z - sol.f ) for sol in pareto_front ] )
+
+        push!(Y, Metaheuristics.get_position(pareto_front[j]))
+    end
+
+    return Y
+end
+
+
 function ll_decision_maker(F, x, Y)
     n_followers = length(Y)
     Fx = []
     for i in 1:n_followers
-        no_dominated = Y[i]
+        no_dominated = Y[i] # for the i-th follower
         for j in 1:length(no_dominated)
             F(x,)
         end
@@ -58,11 +77,14 @@ function initialize_MBO!(problem, engine, parameters, status, information, optio
 
     for x in X
         options.debug && @show x
-        Y = lower_level_optimizer_MBO(x, problem, status, information, options, 0;
+        ll_results = lower_level_optimizer_MBO(x, problem, status, information, options, 0;
                                         parameters.lower_level_parameters,
                                         parameters.n_followers )
 
-        ll_decision_maker(problem.F, x, Y)
+        Y = ll_decision_maker(problem.F, x, ll_results)
+        child = generateChild(x, Y, problem.F(x, Y), (zeros(0), [0.0], [0.0] ))
+        child.other = ll_results
+        
     end
 
     status.stop = true
