@@ -37,19 +37,22 @@ function MBO(;
     algorithm
 end
 
-function ll_decision_based_on_nadir(F, x, followers_result)
+function ll_decision_based_on_nadir(F, x, followers_result_)
+    followers_result = followers_result_.y
     n_followers = length(followers_result)
     Y = []
     for i in 1:n_followers
-        pareto_front = Metaheuristics.pareto_front(followers_result[i]) 
+        @show i
+        display(followers_result[i])
+        pareto_solutions = (followers_result[i].best_sol) 
 
         # get the ideal
-        z = fill(Inf, length(pareto_front[1].f))
-        Metaheuristics.update_reference_point!(z, pareto_front)
+        z = fill(Inf, length(pareto_solutions[1].f))
+        Metaheuristics.update_reference_point!(z, pareto_solutions)
 
-        j = argmin( [ norm( z - sol.f ) for sol in pareto_front ] )
+        j = argmin( [ norm( z - sol.f ) for sol in pareto_solutions ] )
 
-        push!(Y, Metaheuristics.get_position(pareto_front[j]))
+        push!(Y, Metaheuristics.get_position(pareto_solutions[j]))
     end
 
     return Y
@@ -59,12 +62,12 @@ end
 function ll_decision_maker(F, x, Y)
     n_followers = length(Y)
     Fx = []
-    for i in 1:n_followers
-        no_dominated = Y[i] # for the i-th follower
-        for j in 1:length(no_dominated)
-            F(x,)
-        end
-    end
+    # for i in 1:n_followers
+    #     no_dominated = Y[i] # for the i-th follower
+    #     for j in 1:length(no_dominated)
+    #         F(x,)
+    #     end
+    # end
 end
 
 function initialize_MBO!(problem, engine, parameters, status, information, options)
@@ -75,16 +78,20 @@ function initialize_MBO!(problem, engine, parameters, status, information, optio
     b = problem.bounds_ul[2,:]
     X = [ a + (b - a).*rand(D_ul) for i in 1:N ] 
 
+    status.population = []
+
     for x in X
         options.debug && @show x
         ll_results = lower_level_optimizer_MBO(x, problem, status, information, options, 0;
                                         parameters.lower_level_parameters,
                                         parameters.n_followers )
 
-        Y = ll_decision_maker(problem.F, x, ll_results)
+        Y = ll_decision_based_on_nadir(problem.F, x, ll_results)
         child = generateChild(x, Y, problem.F(x, Y), (zeros(0), [0.0], [0.0] ))
         child.other = ll_results
-        
+
+        push!(status.population, child)
+        break
     end
 
     status.stop = true
@@ -95,15 +102,16 @@ end
 
 
 function update_state_MBO!(
-    problem,
-    engine,
-    parameters,
-    status,
-    information,
-    options,
-    t,
-)
- 
+        problem,
+        engine,
+        parameters,
+        status,
+        information,
+        options,
+        t,
+       )
+
+
 
 end
 
