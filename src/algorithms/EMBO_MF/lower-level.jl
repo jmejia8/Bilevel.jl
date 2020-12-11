@@ -9,6 +9,8 @@ function lower_level_optimizer_MBO(x, problem, status, information, options, t; 
     end
 
     parameters = lower_level_parameters
+    # empty!(parameters.population)
+    # empty!(parameters.best_sol)
 
 
     Y = []
