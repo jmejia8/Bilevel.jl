@@ -23,88 +23,111 @@ function get_closest_vectors(X, T)
             distances[j, i] = distances[i, j]
         end
         I = sortperm(distances[i, :])
-        push!(B, I[2:T+1])
+        if T > 1
+            push!(B, I[2:T+1])
+        else 
+            push!(B, I[2])
+        end
     end
 
     return B
 end
 
 
-function optimize_ll_population(X, problem, parameters, status, information, options)
-    B = get_closest_vectors(X, parameters.T)
+function optimize_ll_population(X, problem, parameters, status, information, options; Y = [])
+    B = []
 
     a = problem.bounds_ll[1,:]
     b = problem.bounds_ll[2,:]
-    D_ll = length(a)
+    D = length(a)
     N = parameters.N
 
-    Y = a' .+ (b - a)' .* rand(N, D_ll) 
+    if isempty(Y) || isnothing(Y)
+        Y = [ a + (b - a) .* rand(D) for i in 1:N]
+    end
 
-    ll_population = [Metaheuristics.create_child(Y[i,:], problem.f(X[i],Y[i,:])) for i in 1:N]
+
+    population = [Metaheuristics.create_child(Y[i], problem.f(X[i],Y[i])) for i in 1:N]
     status.f_calls += N
 
     K = min(parameters.T, parameters.K)
-
+    
     # main loop
+    tt = 0
     for gen in 1:options.ll_iterations
-        #@show gen
-        C = zeros(N, D_ll)
-        ids_worst = Int[]
-
+        tt += 1
+        n_improvemts = 0
         # loop for each solution in ll population
         for i in 1:N
 
-            if rand() < parameters.δ
-                neighbors = shuffle(B[i])[1:K]
-            else
-                neighbors = shuffle(1:N)[1:K]
+            P_idx = collect(1:N)
+
+            # select participats
+            r1 = i
+            r2 = rand(P_idx)
+            while r1 == r2
+                r2 = rand(P_idx)
             end
 
-            mass = Metaheuristics.fvals(ll_population[neighbors])
-            # mass
-            mass = 2maximum(abs.(mass)) .- mass
-            mass = mass / sum(mass)
+            r3 = rand(P_idx)
+            while r3 == r1 || r3 == r2
+                r3 = rand(P_idx)
+            end
 
-            # worst element in neighbors
-            push!(ids_worst, neighbors[argmin(mass)])
+            a = population[r1].x
+            b = population[r2].x
+            c = population[r3].x
 
-            # center of mass
-            C[i,:] = sum(Metaheuristics.positions(ll_population[neighbors]) .* mass, dims=1)
-        end
-        # display(C)
 
-        Y_worst = Y[ids_worst, :]
-        η = parameters.η_max*rand(N)
+            # binomial crossover
+            v = zeros(D)
+            j_rand = rand(1:D)
 
-        Y_new = Y +  η .* (C - Y_worst)
-        # fix solutions
-        mask = .!(a' .<= Y_new .<= b')
-        # println("mask ", sum(sum(mask, dims=2) .> 0 ) / N)
-        
-        Y_new[ mask ] = C[mask]
+            # binomial crossover
+            for j = 1:D
+                # binomial crossover
+                if rand() < parameters.CR
+                    v[j] = a[j] + parameters.η_max * (b[j] - c[j])
+                else
+                    v[j] = a[j]
+                end
+                # polynomial mutation
 
-        #sleep(0.05)
-        #display(Y)
+                if rand() < parameters.p_m
+                    r = rand()
+                    if r < 0.5
+                        σ_k = (2.0 * r)^(1.0 / (parameters.η + 1)) - 1
+                    else
+                        σ_k = 1 - (2.0 - 2.0 * r)^(1.0 / (parameters.η + 1))
+                    end
+                    v[j] = v[j] + σ_k * (problem.bounds_ll[2,j] - problem.bounds_ll[1,j])
+                end
+            end
 
-        for i in 1:N
-            new_sol = Metaheuristics.create_child(Y_new[i,:], problem.f(X[i], Y_new[i,:]))
+            v = Metaheuristics.replace_with_random_in_bounds!(v, problem.bounds_ll)
+
+            # instance child
+            h = Metaheuristics.generateChild(v, problem.f(X[i], v))
             status.f_calls += 1
-            j = ids_worst[i]
-            if Metaheuristics.is_better_eca(new_sol, ll_population[j])
-                ll_population[j] = new_sol
-                Y[j,:] = Y_new[i,:]
-                # println("gen: ", gen, "\ti: ", i, "\tf: ", new_sol.f)
+
+            if Metaheuristics.is_better_eca(h, population[i])
+                population[i] = h
+                n_improvemts += 1
             end
+
+
+
         end
 
-        XX = hcat(X...)'
-        plt.scatter(XX[:,end], Y[:,end], title="Gen: $gen", xlim=(-10, 10), ylim=(-10,10))
-        #plt.scatter!(C[:,1], C[:,end], label="center")
-        
-        plt.gui()
+        if n_improvemts == 0
+            options.debug && @info "Early stop at ll $tt"
+            break
+        end
+
+
     end
 
-    return ll_population
+    return population
 
     
 end
@@ -128,19 +151,27 @@ function initialize_SABO2!(
 
     X = [ a + (b - a) .* rand(D_ul) for i in 1:parameters.N]
 
-    ll_pop = optimize_ll_population(X, problem, parameters, status, information, options)
-    options.debug && display(Metaheuristics.positions(ll_pop))
-
-
     status.population = []
+
     for i in 1:length(X)
         x = X[i]
-        y = ll_pop[i].x
+        res = Metaheuristics.optimize(yy -> problem.f(x,yy), problem.bounds_ll, Metaheuristics.ECA( ;options=Metaheuristics.Options(f_calls_limit=7000) ) )
+        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        println(">>>>>>>>>>>>>>>>>>>>>>>>  ",i,"  >>>>>>>>>>>>>>>>>>>>>>>")
+        display(res)
+        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        y = Metaheuristics.minimizer( res )
         new_sol = generateChild(x, y, problem.F(x,y), problem.f(x, y))
+        status.f_calls += res.f_calls
+        status.F_calls += 1
         push!(status.population, new_sol)
+        if isnothing(status.best_sol) || is_better_SABO(new_sol, status.best_sol)
+            status.best_sol = new_sol
+        end
     end
 
-    status.stop = true
+
 
 
 end
@@ -149,6 +180,76 @@ end
 ################################################################################
 #                    I T E R A T I O N
 ################################################################################
+
+function update_state_SABO2_simple!(
+        problem,
+        engine,
+        parameters,
+        status,
+        information,
+        options,
+        t_main_loop,
+    )
+
+
+    N = length(status.population)
+    I = randperm(N)
+    c = zeros(size(problem.bounds_ul,2))
+
+
+    i::Int = 1
+    X = []
+    for sol in status.population
+        x = sol.x
+
+        ########################################################################
+        # center of mass
+        ########################################################################
+        # generate U masses
+        U = getU(status.population, parameters.K, I, i, N); i+=1
+        
+        # generate center of mass
+        c = BCAOperators.center!(c,U)
+
+        ########################################################################
+        # New upper level vector
+        ########################################################################
+        # stepsize
+        η_ul = parameters.η_max * rand()
+
+        # u: worst element in U
+        u = BCAOperators.worst(U, engine.is_better)
+
+        p = x + η_ul * (c - u)
+        BCAOperators.correctSol!(p, c, problem.bounds_ul[1,:], problem.bounds_ul[2,:])
+
+        push!(X, p)
+
+    end
+
+    B = get_closest_vectors(X,1)
+    Y = map(s -> s.y, status.population[B])
+    mask = rand(length(X)) .< 0.3
+    Y[mask] = [ problem.bounds_ll[1,:] + (problem.bounds_ll[2,:] - problem.bounds_ll[1,:] ) .* rand(length(Y[1])) for i in 1:sum(mask) ]
+    ll_pop = optimize_ll_population(X, problem, parameters, status, information, options;Y)
+
+    for i in 1:N
+        x = X[i]
+        y = ll_pop[i].x
+
+        new_sol = generateChild(x, y, problem.F(x,y), problem.f(x, y))
+        status.f_calls +=1
+        status.F_calls += 1
+
+        if is_better_SABO(new_sol, status.population[i])
+            status.population[i] = new_sol
+        end
+    end
+    status.stop = engine.stop_criteria(status, information, options)
+    
+end
+
+
 
 function update_state_SABO2!(
     problem,
@@ -209,7 +310,7 @@ function update_state_SABO2!(
 
     end
 
-    BCAOperators.update_state!(
+    update_state_SABO2_simple!(
         problem,
         engine,
         parameters,
@@ -285,6 +386,9 @@ mutable struct SABO2
     K::Int64
     T::Int
     η_max::Float64
+    CR::Float64
+    p_m::Float64
+    η::Float64
     λ::Float64
     δ::Float64
 end
@@ -293,8 +397,11 @@ function SABO2(
     D::Int;
     K = 3,
     N = K * D,
-    T = round(Int, 0.1N),
-    η_max = 1.2,
+    T = 20,
+    η_max = 0.5,
+    CR = 1.0,
+    p_m = 1/5,
+    η = 20.0,
     λ = 1e-5,
     δ = 0.9,
     F_calls_limit = 350D,
@@ -320,11 +427,11 @@ function SABO2(
     #     information = Information(F_optimum = 0.0, f_optimum = 0.0)
     # end
 
-    sabo = SABO2(N, K, T, η_max, λ, δ)
+    sabo = SABO2(N, K, T, η_max, CR, p_m, η, λ, δ)
 
     algorithm = Algorithm(
         sabo;
-        initialize! = initialize_SABO2!,
+        initialize! = initialize_SABO!,
         update_state! = update_state_SABO2!,
         lower_level_optimizer = lower_level_optimizer_SABO,
         is_better = is_better_SABO,
