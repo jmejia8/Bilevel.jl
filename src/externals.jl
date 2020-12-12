@@ -1,4 +1,4 @@
-import Random.randperm
+import Random: randperm, shuffle
 import Optim
 import LinearAlgebra: norm
 import Printf.@printf
