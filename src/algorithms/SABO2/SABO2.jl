@@ -1,3 +1,70 @@
+mutable struct SABO2
+    N::Int64
+    K::Int64
+    T::Int
+    η_max::Float64
+    CR::Float64
+    p_m::Float64
+    η::Float64
+    λ::Float64
+    δ::Float64
+end
+
+function SABO2(
+    D::Int;
+    K = 3,
+    N = K * D,
+    T = 20,
+    η_max = 0.5,
+    CR = 1.0,
+    p_m = 1/5,
+    η = 20.0,
+    λ = 1e-5,
+    δ = 0.9,
+    F_calls_limit = 350D,
+    f_calls_limit = Inf,
+    iterations = 1 + round(F_calls_limit / N),
+    options = nothing,
+    information = Information(),
+)
+
+    if isnothing(options)
+        options = Options(
+            F_calls_limit = F_calls_limit,
+            f_calls_limit = Inf,
+            debug = false,
+            ll_iterations = 500,
+            F_tol = 1e-2,
+            f_tol = 1e-3,
+            store_convergence = true,
+        )
+    end
+
+    # if isnothing(information)
+    #     information = Information(F_optimum = 0.0, f_optimum = 0.0)
+    # end
+
+    sabo = SABO2(N, K, T, η_max, CR, p_m, η, λ, δ)
+
+    algorithm = Algorithm(
+        sabo;
+        initialize! = initialize_SABO2!,
+        update_state! = update_state_SABO2!,
+        lower_level_optimizer = lower_level_optimizer_SABO,
+        is_better = is_better_SABO,
+        stop_criteria = stop_criteria_SABO,
+        final_stage! = final_stage_SABO!,
+        options = options,
+        information = information,
+    )
+
+
+
+    algorithm
+
+end
+
+
 ################################################################################
 #                       L o w e r      L e v e l
 ################################################################################
@@ -15,6 +82,9 @@ function get_closest_vectors(X, T)
     distances = zeros(N, N)
     λ = X
     B = []
+
+    # distances respecto to B
+    dB = []
     for i in 1:N
         for j in (i+1):N
             distances[i, j] = norm(λ[i] - λ[j])
@@ -26,9 +96,10 @@ function get_closest_vectors(X, T)
         else 
             push!(B, I[2])
         end
+        push!(dB, distances[i,B[end]])
     end
 
-    return B
+    return B, dB
 end
 
 
@@ -124,7 +195,7 @@ function optimize_ll_population(X, problem, parameters, status, information, opt
         end
 
         # stop after no improvments in 10 genererations
-        if n_improvemts > 10
+        if n_improvemts > 20
             options.debug && @info "Early stop at ll $tt - $(n_improvemts)"
             break
         end
@@ -156,19 +227,15 @@ function initialize_SABO2!(
 
     X = [ a + (b - a) .* rand(D_ul) for i in 1:parameters.N]
 
+    ll_pop = optimize_ll_population(X, problem, parameters, status, information, options)
+
+
     status.population = []
 
     for i in 1:length(X)
         x = X[i]
-        res = Metaheuristics.optimize(yy -> problem.f(x,yy), problem.bounds_ll, Metaheuristics.ECA( ;options=Metaheuristics.Options(f_calls_limit=7000) ) )
-        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        println(">>>>>>>>>>>>>>>>>>>>>>>>  ",i,"  >>>>>>>>>>>>>>>>>>>>>>>")
-        display(res)
-        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        y = Metaheuristics.minimizer( res )
+        y = ll_pop[i].x
         new_sol = generateChild(x, y, problem.F(x,y), problem.f(x, y))
-        status.f_calls += res.f_calls
         status.F_calls += 1
         push!(status.population, new_sol)
         if isnothing(status.best_sol) || is_better_SABO(new_sol, status.best_sol)
@@ -257,10 +324,15 @@ function update_state_SABO2_simple!(
 
     end
 
-    B = get_closest_vectors(X,1)
+    B, distances = get_closest_vectors(X,1)
+    @show distances
+
     Y = map(s -> s.y, status.population[B])
-    mask = rand(length(X)) .< 0.5
-    Y[mask] = [ problem.bounds_ll[1,:] + (problem.bounds_ll[2,:] - problem.bounds_ll[1,:] ) .* rand(length(Y[1])) for i in 1:sum(mask) ]
+    # largest distances
+    mask = rand(length(Y)) .< 0.5
+    a = problem.bounds_ll[1,:]
+    b = problem.bounds_ll[2,:]
+    Y[mask] = [ a + (b - a) .* rand(length(Y[1])) for i in 1:sum(mask) ]
     ll_pop = optimize_ll_population(X, problem, parameters, status, information, options;Y)
 
     for i in 1:N
@@ -309,6 +381,7 @@ function update_state_SABO2!(
         t_main_loop,
     )
 
+    return 0
     x = status.best_sol.x
 
     m = Metaheuristics.ECA(options=Metaheuristics.Options(f_calls_limit=7000))
@@ -335,71 +408,6 @@ end
 
 
 
-mutable struct SABO2
-    N::Int64
-    K::Int64
-    T::Int
-    η_max::Float64
-    CR::Float64
-    p_m::Float64
-    η::Float64
-    λ::Float64
-    δ::Float64
-end
-
-function SABO2(
-    D::Int;
-    K = 3,
-    N = K * D,
-    T = 20,
-    η_max = 0.5,
-    CR = 1.0,
-    p_m = 1/5,
-    η = 20.0,
-    λ = 1e-5,
-    δ = 0.9,
-    F_calls_limit = 350D,
-    f_calls_limit = Inf,
-    iterations = 1 + round(F_calls_limit / N),
-    options = nothing,
-    information = Information(),
-)
-
-    if isnothing(options)
-        options = Options(
-            F_calls_limit = F_calls_limit,
-            f_calls_limit = Inf,
-            debug = false,
-            ll_iterations = 500,
-            F_tol = 1e-2,
-            f_tol = 1e-3,
-            store_convergence = true,
-        )
-    end
-
-    # if isnothing(information)
-    #     information = Information(F_optimum = 0.0, f_optimum = 0.0)
-    # end
-
-    sabo = SABO2(N, K, T, η_max, CR, p_m, η, λ, δ)
-
-    algorithm = Algorithm(
-        sabo;
-        initialize! = initialize_SABO2!,
-        update_state! = update_state_SABO2!,
-        lower_level_optimizer = lower_level_optimizer_SABO,
-        is_better = is_better_SABO,
-        stop_criteria = stop_criteria_SABO,
-        final_stage! = final_stage_SABO!,
-        options = options,
-        information = information,
-    )
-
-
-
-    algorithm
-
-end
 
 optimize(F, f, bounds_ul, bounds_ll, method::SABO2) =
     optimize(F, f, bounds_ul, bounds_ll, method)
