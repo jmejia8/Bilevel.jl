@@ -104,90 +104,101 @@ end
 
 
 function optimize_ll_population(X, problem, parameters, status, information, options; Y = [])
-    B = []
+    #B, ds = get_closest_vectors(X, parameters.T)
 
     a = problem.bounds_ll[1,:]
     b = problem.bounds_ll[2,:]
     D = length(a)
     N = parameters.N
+    N_ll = N * parameters.T
 
     if isempty(Y) || isnothing(Y)
-        Y = [ a + (b - a) .* rand(D) for i in 1:N]
+        Y = [ a + (b - a) .* rand(D) for i in 1:N_ll]
     end
 
 
-    population = [Metaheuristics.create_child(Y[i], problem.f(X[i],Y[i])) for i in 1:N]
+    population = [Metaheuristics.create_child(Y[i], problem.f(X[1 + (i-1)%N ],Y[i])) for i in 1:N_ll]
     status.f_calls += N
 
     K = min(parameters.T, parameters.K)
-    
+
     n_improvemts = 0
     # main loop
     tt = 0
+
+    P_idx_all = collect(1:N)
     for gen in 1:options.ll_iterations
         tt += 1
         improvement_flag = false
         # loop for each solution in ll population
         for i in 1:N
-
-            P_idx = collect(1:N)
-
-            # select participats
-            r1 = i
-            r2 = rand(P_idx)
-            while r1 == r2
-                r2 = rand(P_idx)
-            end
-
-            r3 = rand(P_idx)
-            while r3 == r1 || r3 == r2
-                r3 = rand(P_idx)
-            end
-
-            a = population[r1].x
-            b = population[r2].x
-            c = population[r3].x
-
-
-            # binomial crossover
-            v = zeros(D)
-            j_rand = rand(1:D)
-
-            # binomial crossover
-            for j = 1:D
-                # binomial crossover
-                if rand() < parameters.CR
-                    v[j] = a[j] + 0.5  * (b[j] - c[j])
+            # sub population
+            B = (1+(i-1)*parameters.T):(i*parameters.T)
+            subpopulation = view(population, B)
+            for k in 1:parameters.T
+                if rand() < parameters.δ
+                    P_idx = B
                 else
-                    v[j] = a[j]
+                    P_idx = P_idx_all
                 end
-                # polynomial mutation
+                # select participats
+                r1 = B[1]+k-1
+                r2 = rand(P_idx)
+                while r1 == r2
+                    r2 = rand(P_idx)
+                end
 
-                if rand() < parameters.p_m
-                    r = rand()
-                    if r < 0.5
-                        σ_k = (2.0 * r)^(1.0 / (parameters.η + 1)) - 1
+                r3 = rand(P_idx)
+                while r3 == r1 || r3 == r2
+                    r3 = rand(P_idx)
+                end
+
+                a = population[r1].x
+                b = population[r2].x
+                c = population[r3].x
+
+
+                # binomial crossover
+                v = zeros(D)
+                j_rand = rand(1:D)
+
+                # binomial crossover
+                for j = 1:D
+                    # binomial crossover
+                    if rand() < parameters.CR
+                        v[j] = a[j] + 0.5  * (b[j] - c[j])
                     else
-                        σ_k = 1 - (2.0 - 2.0 * r)^(1.0 / (parameters.η + 1))
+                        v[j] = a[j]
                     end
-                    v[j] = v[j] + σ_k * (problem.bounds_ll[2,j] - problem.bounds_ll[1,j])
+                    # polynomial mutation
+
+                    if rand() < parameters.p_m
+                        r = rand()
+                        if r < 0.5
+                            σ_k = (2.0 * r)^(1.0 / (parameters.η + 1)) - 1
+                        else
+                            σ_k = 1 - (2.0 - 2.0 * r)^(1.0 / (parameters.η + 1))
+                        end
+                        v[j] = v[j] + σ_k * (problem.bounds_ll[2,j] - problem.bounds_ll[1,j])
+                    end
                 end
+
+                v = Metaheuristics.replace_with_random_in_bounds!(v, problem.bounds_ll)
+
+                # instance child
+                h = Metaheuristics.generateChild(v, problem.f(X[i], v))
+                status.f_calls += 1
+
+                if Metaheuristics.is_better_eca(h, subpopulation[k])
+                    subpopulation[k] = h
+                    improvement_flag = true
+                    n_improvemts = 0
+                end
+
+
+
             end
-
-            v = Metaheuristics.replace_with_random_in_bounds!(v, problem.bounds_ll)
-
-            # instance child
-            h = Metaheuristics.generateChild(v, problem.f(X[i], v))
-            status.f_calls += 1
-
-            if Metaheuristics.is_better_eca(h, population[i])
-                population[i] = h
-                improvement_flag = true
-                n_improvemts = 0
-            end
-
-
-
+            sort!( subpopulation, by=s->s.f)
         end
 
         if !improvement_flag
@@ -195,7 +206,7 @@ function optimize_ll_population(X, problem, parameters, status, information, opt
         end
 
         # stop after no improvments in 10 genererations
-        if n_improvemts > 20
+        if n_improvemts > 100
             options.debug && @info "Early stop at ll $tt - $(n_improvemts)"
             break
         end
@@ -203,7 +214,9 @@ function optimize_ll_population(X, problem, parameters, status, information, opt
 
     end
 
-    return population
+    final_pop = population[1:parameters.T:end]
+
+    return final_pop
 
     
 end
@@ -243,7 +256,7 @@ function initialize_SABO2!(
         end
     end
 
-
+    status.stop = true
 
 
 end
