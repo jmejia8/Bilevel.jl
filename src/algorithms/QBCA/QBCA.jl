@@ -19,7 +19,7 @@ function QBCA(D_ul;
         s_min::Real = 0.01,
         α::Real = 0.05,
         β::Real = 0.05,
-        options = Options(),
+        options = Options(F_calls_limit=2000, f_calls_limit=Inf, iterations=1000),
         information = Information(),
 
 
@@ -157,7 +157,7 @@ function update_state_QBCA!(
 
         # current-to-center
         p = x + η_ul * (c_ul - u)
-        p = correct(p, problem.bounds_ul)
+        p = Metaheuristics.reset_to_violated_bounds!(p, problem.bounds_ul)
         pp = (p, c_ll, v)
         # ------------------------------------------- -- ---
         ll = engine.lower_level_optimizer(pp, problem, status, information, options, t_main_loop, parameters)
@@ -166,7 +166,7 @@ function update_state_QBCA!(
         status.f_calls += ll.f_calls
         # ------------------------------------------- -- ---
 
-        # q = correct(q, bounds_ll)
+        # q = Metaheuristics.reset_to_violated_bounds!(q, bounds_ll)
 
         sol = generateChild(p, q, problem.F(p, q), fpq)
         status.F_calls += 1
@@ -189,7 +189,7 @@ function update_state_QBCA!(
 
     end
 
-    status.population = deepcopy(status.population)
+    # status.population = deepcopy(status.population)
 
     status.iteration += 1
 
@@ -213,7 +213,7 @@ function lower_level_optimizer_QBCA(pp, problem, status, information, options, t
         vv = (c_ll - v)
         # current-to-center
         y1 = y0 + (η_ll / norm(vv)) * vv
-        y1 = correct(y1, problem.bounds_ll)
+        y1 = Metaheuristics.reset_to_violated_bounds!(y1, problem.bounds_ll)
 
         # approx
         r = Optim.optimize(
