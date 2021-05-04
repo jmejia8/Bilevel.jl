@@ -83,19 +83,27 @@ function test3()
 end
 
 function testSABO()
-    D = 3
+    D = 5
     bounds = Array([-1 * ones(D) 1 * ones(D)]')
 
     information = Information(F_optimum = 0.0, f_optimum = 0.0)
 
-    method = SABO(D; information = information)
+
+    # F(x, y) = sum((x + y) .^ 2)
+    # f(x, y) = sum((sin.(4π * x) - y) .^ 2)
+
+
+    F(x, y) = sum( (x[1:end-3] .- 0.2) .^2 ) + sum( (y[end-2:end] - x[end-2:end]) .^2 )
+    f(x, y) = (x[1] .- 0.2)^2 + sum( (y[1:end-3] .- 0.2) .^2 ) + sum( (y[end-2:end] - x[end-2:end]) .^2 )
+
+    method = SABO(D, N = 20; information = information)
     r = optimize(
-        (x, y) -> sum((x + y) .^ 2),
-        (x, y) -> sum((sin.(4π * x) - y) .^ 2),
+        F, f,
         bounds,
         bounds,
         method
     )
+    display(r)
     #r.best_sol.F < 1e-2 && r.best_sol.f < 1e-3
     true
 
@@ -113,8 +121,8 @@ function test_mo()
 end
 
 
-@test test1()
-@test test2()
-@test test3()
+# @test test1()
+# @test test2()
+# @test test3()
 @test testSABO()
-@test test_mo()
+# @test test_mo()
