@@ -1,94 +1,4 @@
-################################################################################
-#                       L o w e r      L e v e l
-################################################################################
-
-
-function stop_check_eca(status, information, options)
-    var(map(s -> s.f, status.population)) < 1e-5 ||
-        Metaheuristics.stop_check(status, information, options)
-
-end
-
-function initialize_eca!(
-    problem,
-    engine,
-    parameters,
-    status,
-    information,
-    options;
-    bilevel_population = nothing,
-)
-    if isnothing(bilevel_population)
-        Metaheuristics.initialize_eca!(
-            problem,
-            engine,
-            parameters,
-            status,
-            information,
-            options,
-        )
-        return
-    end
-
-    parameters.N -= length(bilevel_population)
-    Metaheuristics.initialize_eca!(
-        problem,
-        engine,
-        parameters,
-        status,
-        information,
-        options,
-    )
-
-
-    for i = 1:length(bilevel_population)
-        sol = bilevel_population[i]
-        push!(
-            status.population,
-            Metaheuristics.generateChild(sol.y, problem.f(sol.y)),
-        )
-    end
-
-    parameters.N = length(status.population)
-
-    status.f_calls = parameters.N
-    status.iteration = 0
-    status.best_sol = Metaheuristics.getBest(status.population, :minimize)
-    status.stop = engine.stop_criteria(status, information, options)
-end
-
-function gent_optimal_SABO(
-    f,
-    bounds,
-    local_population = nothing;
-    f_calls_limit = isnothing(local_population) ? 1000 * size(bounds, 2) :
-                    100 * size(bounds, 2),
-)
-    D = size(bounds, 2)
-    K = isnothing(local_population) ? 7 : 3
-    η_max = 1.2 #isnothing(local_population) ? 1.2 : 1.2
-
-    eca = Metaheuristics.ECA(K = K, N = K * size(bounds, 2), η_max = η_max)
-    eca.engine.stop_criteria = stop_check_eca
-    if !isnothing(local_population)
-        eca.options.f_calls_limit = f_calls_limit
-        eca.engine.initialize! =
-            (a1, a2, a3, a4, a5, a6) -> initialize_eca!(
-                a1,
-                a2,
-                a3,
-                a4,
-                a5,
-                a6,
-                bilevel_population = local_population,
-            )
-    end
-
-    res = Metaheuristics.optimize(f, bounds, eca)
-
-
-    return res
-end
+include("lower-level.jl")
 
 function lower_level_optimizer_SABO(x, problem, status, information, options, t)
     D = size(problem.bounds_ll, 2)
@@ -97,13 +7,13 @@ function lower_level_optimizer_SABO(x, problem, status, information, options, t)
         distances = map(sol -> norm(sol.x - x), status.population)
         I = sortperm(distances)
         local_population = status.population[I[1:D]]
-        res = gent_optimal_SABO(
+        res = LowerLevelSABO.gent_optimal_SABO(
             z -> problem.f(x, z),
             problem.bounds_ll,
             local_population,
         )
     else
-        res = gent_optimal_SABO(z -> problem.f(x, z), problem.bounds_ll)
+        res = LowerLevelSABO.gent_optimal_SABO(z -> problem.f(x, z), problem.bounds_ll)
     end
     y = res.best_sol.x
     fy = res.best_sol.f
@@ -114,8 +24,6 @@ function lower_level_optimizer_SABO(x, problem, status, information, options, t)
 
 
 end
-
-
 ################################################################################
 #                    I n i t i l i a z a t i o n
 ################################################################################
@@ -245,7 +153,7 @@ function update_state_SABO!(
     end
     best_y = status.best_sol.y
     sol = status.best_sol
-    res = gent_optimal_SABO(z -> problem.f(sol.x, z), problem.bounds_ll, [sol])
+    res = LowerLevelSABO.gent_optimal_SABO(z -> problem.f(sol.x, z), problem.bounds_ll, [sol])
     y = res.best_sol.x
     f_calls = res.f_calls
 
@@ -263,7 +171,7 @@ function update_state_SABO!(
 
 
     for sol in status.population
-        res = gent_optimal_SABO(
+        res = LowerLevelSABO.gent_optimal_SABO(
             z -> problem.f(sol.x, z),
             problem.bounds_ll,
             [sol],
