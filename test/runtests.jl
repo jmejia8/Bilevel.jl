@@ -103,9 +103,7 @@ function testSABO()
         bounds,
         method
     )
-    display(r)
-    #r.best_sol.F < 1e-2 && r.best_sol.f < 1e-3
-    true
+    r.best_sol.F < 1e-2 && r.best_sol.f < 1e-3
 
 end
 
