@@ -1,5 +1,11 @@
 # Bilevel Optimization Methods
 
+**Outdated repository.**
+
+[BilevelHeuristics.jl](https://github.com/jmejia8/BilevelHeuristics.jl) is a refactored version of this package.
+
+<hr>
+
 Some methods for Bilevel Optimization for Julia 1.x will be shared here.
 
 ## Installation
